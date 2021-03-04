@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Search{% endblock %}
+{% block content %}
+
+<div class="container page-item-wrapper">
+  <div class="container section-header">
+    <h3>Search Reddit</h3>
+  </div>
+  <form action="{% url 'downloader:search-home' %}" method='POST'>
+    {% csrf_token %}
+    <p class="my-5">Search for {{form.terms}} {{form.terms.errors}}</p>
+    <div class="row form-group">
+      <div class="col">
+        <p class="my-5">{{form.search_type.label}} {{form.search_type}}</p>
+        <p class="my-5">{{form.syntax.label}} {{form.syntax}} {{form.syntax.errors}}</p>
+      </div>
+      <div class="col">
+        <p class="my-5">
+          {{form.subreddit.label}} {{form.subreddit}} {{form.subreddit.errors}} {% autoescape off%}{{form.subreddit.help_text}}{% endautoescape %}
+        </p>
+        <p class="my-5">{{form.limit.label}} {{form.limit}} {{form.limit.errors}}</p>
+        
+      </div>
+    </div>
+    <div id="time_options">
+      <div class="container my-5 d-flex justify-content-start align-items-center">
+        <input type="radio" name="time_option" value="time_filter" required checked>
+        <p class="mx-5">{{form.time_filter.label}} {{form.time_filter}} {{form.time_filter.errors}}</p>
+        <p class="mx-5" id="praw_sort_p">{{form.praw_sort.label}} {{form.praw_sort}} {{form.praw_sort.errors}}</p>
+        
+      </div>
+      <div class="container my-5 d-flex justify-content-start align-items-center">
+        <input type="radio" name="time_option" value="date_range" required>
+        <div class="flex column">
+          <p class="mx-3">
+            {{form.start_date.label}} {{form.start_date.help_text}} {{form.start_date}} 
+          </p>
+          <p class="mx-3">{{form.start_date.errors}}</p>
+        </div>
+        <div class="flex-column">
+          <p class="mx-3">
+            {{form.end_date.label}} {{form.end_date}}
+          </p>
+          <p class="mx-3">{{form.end_date.errors}}</p>
+        </div>
+
+        <p class="mx-3">{{form.psaw_sort.label}} {{form.psaw_sort}} {{form.psaw_sort.errors}}</p>
+      </div>
+    </div>
+    
+    <p class="my-5">{{form.favorite}} Favorite this search</p>
+
+    <div class="container btn-container d-flex justify-content-center">
+      <button class="btn btn-success submit-btn" id="search_btn" type="submit">Search</button>
+    </div>
+  </form>
+  </div>
+  
+</div>
+
+{% endblock %}

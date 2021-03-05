@@ -1,6 +1,14 @@
 from django.db import models
 
 
+class User(models.Model):
+    username = models.CharField(max_length=20, primary_key=True)
+    last_clear_datetime = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.username
+
+
 class SearchQuery(models.Model):
     PRAW_SORT_CHOICES = (
         ('relevance', 'Relevance'),
@@ -33,6 +41,7 @@ class SearchQuery(models.Model):
         ('submissions', 'Submissions'),
         ('comments', 'Comments')
     )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     terms = models.CharField(max_length=512, blank=True, null=True)
     search_type = models.CharField(
         max_length=11, 
@@ -59,7 +68,6 @@ class SearchQuery(models.Model):
         blank=True,
         null=True
     )
-
     start_date = models.DateTimeField(
         blank=True, 
         null=True, 

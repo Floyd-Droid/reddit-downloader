@@ -10,4 +10,5 @@ class SearchForm(forms.ModelForm):
         model = SearchQuery
         exclude = (
             'date_searched',
+            'user'
         )

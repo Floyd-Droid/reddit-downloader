@@ -8,6 +8,7 @@ from .forms import (
     SearchForm,
 )
 from .models import (
+    User,
     SearchQuery,
 )
 
@@ -52,8 +53,16 @@ def authorize(request):
         print("MISSING CODE")
         return 'Missing access token'
 
-    # Use the code to authorize our reddit instance
+    # Use the code to authorize our reddit instance, and save the user's name to session.
     reddit.auth.authorize(auth_code)  
+    request.session["authenticated"] = True
+    request.session["current_user"] = str(reddit.user.me())
+
+    # Add user to database if not present.
+    username = request.session["current_user"]
+    if not User.objects.filter(username=username).exists():
+        new_user = User.objects.create(username=username)
+        new_user.save()
 
     return redirect(reverse('downloader:search-home'))
 
@@ -83,7 +92,11 @@ class SearchView(FormView):
         return render(request, self.template_name, self.context)
     
     def form_valid(self, form):
-        query = form.save()
+        query = form.save(commit=False)
+        # Add user to search query object
+        username = self.request.session["current_user"]
+        query.user = User.objects.get(username=username)
+        query.save()
         return redirect(reverse('downloader:search-results', kwargs={'pk': query.pk}))
     
     def form_invalid(self, form):

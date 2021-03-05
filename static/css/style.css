@@ -1,0 +1,93 @@
+#page-content-wrapper {
+  background-color:white;
+  min-width: 100vw;
+  min-height: 100vh;
+}
+
+
+.navbar-brand {
+  font-size: 1.3rem;
+}
+
+#navbar {
+  background-color: #cee3f8;/*#EFF7FF;*/
+  color:black;
+  border-bottom: 1px ridge gray;
+}
+
+a#welcome-msg {
+  font-size: 1.2em;
+  color: black;
+}
+
+.nav-item {
+  color:black;
+}
+
+
+
+
+
+div.page-item-wrapper {
+  background-color: white;
+  border: 1px ridge #14227b;
+  border-radius: 5px;
+  margin: 5vh auto 10vh;
+  padding-bottom: 10px;
+  width: 70vw;
+}
+
+
+
+div.login-wrapper {
+  background-color: white;
+  border: 1px ridge #14227b;
+  border-radius: 5px;
+  margin-top: 10vh;
+  margin-bottom: auto;
+  max-width: 400px;
+}
+
+.section-header {
+  background-color: #14227b;
+  color: white;
+  padding: 10px 20px 10px 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 5px 5px gray;
+}
+
+
+div#time_options { /* time options for search form */
+  border-top: 1px ridge #14227b;
+  border-bottom: 1px ridge #14227b;
+}
+
+
+.errorlist {
+  color: red;
+}
+
+
+/* label[for="id_start_date"] {
+  float: top;
+} */
+
+span.top {
+  display: block;
+  margin-top: 2vh;
+}
+
+
+@media (min-width: 768px) {
+  #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+}

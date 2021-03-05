@@ -11,73 +11,19 @@ from .models import (
     User,
     SearchQuery,
 )
-
-import praw
-import uuid
-import datetime
-import environ
-
-env = environ.Env()
-environ.Env.read_env()
-
-reddit = praw.Reddit(
-    client_id=env.str('CLIENT_ID'),
-    client_secret=env.str('CLIENT_SECRET'),
-    user_agent='jf_downloader',
-    redirect_uri = 'http://localhost:8000/authorize'
+from .tasks import (
+    AUTH_URL,
 )
-
-scopes = ['*']
-state = str(uuid.uuid4())
-auth_url = reddit.auth.url(scopes, state)
-
-def authorize(request):
-    """
-    User is redirected here after successful login with Reddit.
-    Set the access token to the reddit instance and redirect to search page.
-    """
-    returned_state = request.GET.get('state', None)
-    auth_code = request.GET.get('code', None)
-    error = request.GET.get('error', None)
-
-    #TODO - handle these cases
-    if returned_state != state:
-        print("UNAUTHORIZED")
-        return 'Unauthorized'  
-
-    if error:
-        print(error)
-        return
-
-    if auth_code is None:
-        print("MISSING CODE")
-        return 'Missing access token'
-
-    # Use the code to authorize our reddit instance, and save the user's name to session.
-    reddit.auth.authorize(auth_code)  
-    request.session["authenticated"] = True
-    request.session["current_user"] = str(reddit.user.me())
-
-    # Add user to database if not present.
-    username = request.session["current_user"]
-    if not User.objects.filter(username=username).exists():
-        new_user = User.objects.create(username=username)
-        new_user.save()
-
-    return redirect(reverse('downloader:search-home'))
-
-def get_results(query):
-    pass
 
 
 class LoginView(View):
     template_name = 'authorization/login.html'
-    context = {
-        "auth_url": auth_url
-    }
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, self.context)
+        context = {
+            "auth_url": AUTH_URL
+        }
+        return render(request, self.template_name, context)
 
 
 class SearchView(FormView):

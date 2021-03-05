@@ -37,17 +37,9 @@ class SearchQuery(models.Model):
         ('cloudsearch', 'Cloudsearch'),
         ('plain', 'Plain')
     )
-    SEARCH_CHOICES = (
-        ('submissions', 'Submissions'),
-        ('comments', 'Comments')
-    )
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     terms = models.CharField(max_length=512, blank=True, null=True)
-    search_type = models.CharField(
-        max_length=11, 
-        choices=SEARCH_CHOICES, 
-        default='submissions'
-    )
     subreddit = models.CharField(max_length=250, blank=True, null=True, help_text="<br>comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit")
 
     syntax = models.CharField(

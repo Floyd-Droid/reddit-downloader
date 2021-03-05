@@ -1,7 +1,10 @@
 from django.urls import path
 
+from .tasks import(
+    authorize
+)
+
 from .views import (
-    authorize,
     LoginView,
     SearchView,
     SearchResultsView,

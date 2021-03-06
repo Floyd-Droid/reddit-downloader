@@ -62,3 +62,86 @@ def authorize(request):
         new_user.save()
 
     return redirect(reverse('downloader:search-home'))
+
+
+def get_submission_data(submissions):
+    """From the passed generator, get submission data as a list of dictionaries."""
+    sub_data = []
+    for sub in submissions:
+        date_created = datetime.datetime.fromtimestamp(sub.created)
+        sub_data.append({'title': sub.title, 'id': sub.id, 'score': sub.score, 'permalink': sub.permalink, \
+            'url': sub.url, 'num_comments': sub.num_comments, 'date': date_created, 'selftext': sub.selftext})
+
+    return sub_data
+
+def get_results(query: SearchQuery):
+    """Determine which function is used to grab search results."""
+    if query.praw_sort is not None:              
+        results = get_praw_submissions(query)
+    elif query.psaw_sort is not None:
+        results = get_psaw_submissions(query)
+    else:
+        pass
+
+    return results
+
+def get_praw_submissions(query: SearchQuery):
+    """Grab submissions using PRAW based on the SearchQuery object."""
+    sub_list = query.subreddit.split(',')
+
+    # Get a list of subreddits to be included and excluded from the search.
+    include = [sub for sub in sub_list if not sub.startswith('!')]
+
+    if query.terms:
+        subreddit = reddit.subreddit('+'.join(include))
+        submissions = subreddit.search(
+            query=query.terms,
+            syntax=query.syntax, 
+            sort=query.praw_sort, 
+            time_filter=query.time_filter, 
+            limit=query.limit,
+        )
+    else: 
+        # Set up all possible reddit sorts without search terms
+        if 'front' in sub_list:
+            subreddit = reddit.front
+        else:
+            # PRAW uses + and - to chain subreddits
+            sub_str = query.subreddit.replace(',!', '-')
+            sub_str = sub_str.replace(',', '+')
+            subreddit = reddit.subreddit(sub_str)
+
+        if query.praw_sort == 'hot':
+            submissions = subreddit.hot(limit=query.limit) 
+        elif query.praw_sort == 'top':
+            submissions = subreddit.top(time_filter=query.time_filter) 
+        elif query.praw_sort == 'new':
+            submissions = subreddit.new(limit=query.limit) 
+        elif query.praw_sort == 'controversial':
+            submissions = subreddit.controversial(time_filter=query.time_filter, limit=query.limit) 
+        elif query.praw_sort == 'rising':
+            submissions = subreddit.rising(limit=query.limit) 
+        elif query.praw_sort == 'random rising':
+            submissions = subreddit.random_rising(limit=query.limit) 
+ 
+    results = get_submission_data(submissions)
+    return results
+
+
+def get_psaw_submissions(query: SearchQuery):
+    """Grab submissions using PSAW based on the SearchQuery object."""
+
+    # Convert user input date to utc
+    start_date = int(query.start_date.timestamp())
+    end_date = int(query.end_date.timestamp())
+
+    # Drop 'all' from subreddit list if it exists (invalid for psaw)
+    sub_list = query.subreddit.split(',')
+    if 'all' in sub_list:
+        sub_list.remove('all')
+    sub_str = ",".join(sub_list)
+
+    submissions = list(api.search_submissions(q=query.terms, subreddit=sub_str, limit=query.limit, after=start_date, before=end_date, sort_type=query.psaw_sort))
+
+    results = get_submission_data(submissions)
+    return results

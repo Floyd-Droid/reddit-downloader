@@ -13,6 +13,10 @@ from .models import (
 )
 from .tasks import (
     AUTH_URL,
+    get_results,
+    get_submission_data,
+    get_praw_submissions,
+    get_psaw_submissions,
 )
 
 

@@ -69,7 +69,8 @@ def get_submission_data(submissions):
     sub_data = []
     for sub in submissions:
         date_created = datetime.datetime.fromtimestamp(sub.created)
-        sub_data.append({'title': sub.title, 'id': sub.id, 'score': sub.score, 'permalink': sub.permalink, \
+        permalink = 'https://www.reddit.com' + sub.permalink
+        sub_data.append({'title': sub.title, 'id': sub.id, 'score': sub.score, 'permalink': permalink, \
             'url': sub.url, 'num_comments': sub.num_comments, 'date': date_created, 'selftext': sub.selftext})
 
     return sub_data
@@ -91,40 +92,70 @@ def get_praw_submissions(query: SearchQuery):
 
     # Get a list of subreddits to be included and excluded from the search.
     include = [sub for sub in sub_list if not sub.startswith('!')]
+    exclude = [sub.replace('!', '') for sub in sub_list if sub.startswith('!')]
 
-    if query.terms:
-        subreddit = reddit.subreddit('+'.join(include))
-        submissions = subreddit.search(
-            query=query.terms,
-            syntax=query.syntax, 
-            sort=query.praw_sort, 
-            time_filter=query.time_filter, 
-            limit=query.limit,
-        )
-    else: 
-        # Set up all possible reddit sorts without search terms
-        if 'front' in sub_list:
-            subreddit = reddit.front
-        else:
-            # PRAW uses + and - to chain subreddits
-            sub_str = query.subreddit.replace(',!', '-')
-            sub_str = sub_str.replace(',', '+')
-            subreddit = reddit.subreddit(sub_str)
+    lim = query.limit
+    submissions_to_keep = []
+    last = None
+    count = 0
 
-        if query.praw_sort == 'hot':
-            submissions = subreddit.hot(limit=query.limit) 
-        elif query.praw_sort == 'top':
-            submissions = subreddit.top(time_filter=query.time_filter) 
-        elif query.praw_sort == 'new':
-            submissions = subreddit.new(limit=query.limit) 
-        elif query.praw_sort == 'controversial':
-            submissions = subreddit.controversial(time_filter=query.time_filter, limit=query.limit) 
-        elif query.praw_sort == 'rising':
-            submissions = subreddit.rising(limit=query.limit) 
-        elif query.praw_sort == 'random rising':
-            submissions = subreddit.random_rising(limit=query.limit) 
+    # Retrieve valid results until the limit is reached.
+    while len(submissions_to_keep) < query.limit:
+        if query.terms:
+            subreddit = reddit.subreddit('+'.join(include))
+            submissions = subreddit.search(
+                query=query.terms,
+                syntax=query.syntax, 
+                sort=query.praw_sort, 
+                time_filter=query.time_filter, 
+                limit=lim,
+                params={'after':last}
+            )
+        else: 
+            # Set up all possible reddit sorts without search terms
+            if 'front' in sub_list:
+                subreddit = reddit.front
+            else:
+                # PRAW uses + and - to chain subreddits
+                sub_str = query.subreddit.replace(',!', '-')
+                sub_str = sub_str.replace(',', '+')
+                subreddit = reddit.subreddit(sub_str)
+                # Exclusions are accounted for in the sub_str here.
+                exclude = []
+
+            if query.praw_sort == 'hot':
+                submissions = subreddit.hot(limit=lim, params={'after':last}) 
+            elif query.praw_sort == 'top':
+                submissions = subreddit.top(time_filter=query.time_filter, params={'after':last}) 
+            elif query.praw_sort == 'new':
+                submissions = subreddit.new(limit=lim, params={'after':last}) 
+            elif query.praw_sort == 'controversial':
+                submissions = subreddit.controversial(time_filter=query.time_filter, limit=lim, params={'after':last}) 
+            elif query.praw_sort == 'rising':
+                submissions = subreddit.rising(limit=lim, params={'after':last}) 
+            elif query.praw_sort == 'random rising':
+                submissions = subreddit.random_rising(limit=lim, params={'after':last}) 
+        
+        # If the length of the list remains the same over multiple iterations, we have
+        # likely retrieved all possible results for this search.
+        len1 = len(submissions_to_keep)
+
+        # Find submissions to keep: ignore stickied, removed, or deleted posts, as well as excluded subreddits.
+        submissions_to_keep += [sub for sub in submissions if sub.subreddit not in exclude and \
+            sub.stickied is False and sub.selftext not in ['[removed]', '[deleted]']]
+        len2 = len(submissions_to_keep)
+        # Break if the length of submissions does not change for 5 iterations
+        if len1 == len2:
+            if count == 5:
+                break
+            else:
+                count += 1
+
+        lim = query.limit - len(submissions_to_keep)
+        # Use the fullname of the last submission as a starting point for the next search.
+        last = submissions_to_keep[-1].fullname
  
-    results = get_submission_data(submissions)
+    results = get_submission_data(submissions_to_keep)
     return results
 
 
@@ -139,9 +170,37 @@ def get_psaw_submissions(query: SearchQuery):
     sub_list = query.subreddit.split(',')
     if 'all' in sub_list:
         sub_list.remove('all')
-    sub_str = ",".join(sub_list)
+    sub_str = ','.join(sub_list)
 
-    submissions = list(api.search_submissions(q=query.terms, subreddit=sub_str, limit=query.limit, after=start_date, before=end_date, sort_type=query.psaw_sort))
+    lim = query.limit
+    submissions_to_keep = []
+    last = None
+    count = 0
 
-    results = get_submission_data(submissions)
+    while len(submissions_to_keep) < query.limit:
+
+        submissions = list(api.search_submissions(
+            q=query.terms, 
+            subreddit=sub_str, 
+            limit=lim, 
+            after=start_date,
+            before=end_date, 
+            sort_type=query.psaw_sort, 
+            params={'after':last}
+        ))
+
+        len1 = len(submissions_to_keep)
+        # Find submissions to keep: ignore stickied, removed, or deleted posts.
+        submissions_to_keep += [sub for sub in submissions if sub.stickied is False and \
+            sub.selftext not in ['[removed]', '[deleted]']]
+        len2 = len(submissions_to_keep)
+
+        if len1 == len2:
+            if count == 5:
+                break
+            else:
+                count += 1
+        lim = query.limit - len(submissions_to_keep)
+
+    results = get_submission_data(submissions_to_keep)
     return results

@@ -61,10 +61,10 @@ def authorize(request):
         new_user = User.objects.create(username=username)
         new_user.save()
 
-    return redirect(reverse('downloader:search-home'))
+    return redirect(reverse('downloader:search-main'))
 
 
-def get_submission_data(submissions):
+def get_submission_data(submissions, sort=None):
     """From the passed generator, get submission data as a list of dictionaries."""
     sub_data = []
     for sub in submissions:
@@ -72,8 +72,20 @@ def get_submission_data(submissions):
         permalink = 'https://www.reddit.com' + sub.permalink
         sub_data.append({'title': sub.title, 'id': sub.id, 'score': sub.score, 'permalink': permalink, \
             'url': sub.url, 'num_comments': sub.num_comments, 'date': date_created, 'selftext': sub.selftext})
+    
+    # Sort the data if not relying on a Reddit sorting algorithm.
+    if sort == 'num_comments':
+        sub_data.sort(key=sort_by_comments)
+    elif sort == 'score':
+        sub_data.sort(key=sort_by_score)
 
     return sub_data
+
+def sort_by_comments(item):
+    return item['num_comments']
+
+def sort_by_score(item):
+    return item['score']
 
 def get_results(query: SearchQuery):
     """Determine which function is used to grab search results."""
@@ -202,5 +214,5 @@ def get_psaw_submissions(query: SearchQuery):
                 count += 1
         lim = query.limit - len(submissions_to_keep)
 
-    results = get_submission_data(submissions_to_keep)
+    results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
     return results

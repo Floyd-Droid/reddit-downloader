@@ -6,7 +6,7 @@
   <div class="container section-header">
     <h3>Search Reddit</h3>
   </div>
-  <form action="{% url 'downloader:search-home' %}" method='POST'>
+  <form action="{% url 'downloader:search-main' %}" method='POST'>
     {% csrf_token %}
     <p class="my-5">Search for {{form.terms}} {{form.terms.errors}}</p>
     <div class="row form-group">

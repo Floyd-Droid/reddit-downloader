@@ -39,9 +39,17 @@ class SearchQuery(models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    terms = models.CharField(max_length=512, blank=True, null=True)
-    subreddit = models.CharField(max_length=250, blank=True, null=True, help_text="<br>comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit")
-
+    terms = models.CharField(
+        max_length=512, 
+        blank=True, 
+        null=True
+    )
+    subreddit = models.CharField(
+        max_length=250, 
+        blank=True, 
+        null=True, 
+        help_text="<br>comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit"
+    )
     syntax = models.CharField(
         max_length=11,
         choices=SYNTAX_CHOICES,
@@ -72,7 +80,7 @@ class SearchQuery(models.Model):
         blank=True,
         null=True
     )
-    date_created = models.DateField(auto_now=True)
+    date_created = models.DateTimeField(auto_now=True)
     favorite = models.BooleanField(default=False)
 
     class Meta:

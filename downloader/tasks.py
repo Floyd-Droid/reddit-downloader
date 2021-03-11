@@ -4,9 +4,11 @@ from .models import (
     SearchQuery,
     User
 )
+from prawcore import NotFound
 
 import datetime
 import praw
+from typing import Tuple
 from psaw import PushshiftAPI
 import environ
 import uuid
@@ -63,8 +65,21 @@ def authorize(request):
 
     return redirect(reverse('downloader:search-main'))
 
+def get_nonexistent_subreddits(include: list, exclude: list) -> list:
+    """Return any nonexistent subreddits given the lists of subreddits."""
+    non_existent = []
+    all_subs = include + exclude
+    for sub in all_subs:
+        if sub == 'front' or sub == 'all':
+            continue
+        try:
+            reddit.subreddits.search_by_name(sub, exact=True)
+        except NotFound:
+            non_existent.append(sub)
 
-def get_submission_data(submissions, sort=None):
+    return non_existent
+
+def get_submission_data(submissions: list, sort: str='') -> list:
     """From the passed generator, get submission data as a list of dictionaries."""
     sub_data = []
     for sub in submissions:
@@ -87,9 +102,9 @@ def sort_by_comments(item):
 def sort_by_score(item):
     return item['score']
 
-def get_results(query: SearchQuery):
+def get_results(query: SearchQuery) -> Tuple[list, list]:
     """Determine which function is used to grab search results."""
-    if query.praw_sort is not None:              
+    if query.praw_sort is not None:             
         results = get_praw_submissions(query)
     elif query.psaw_sort is not None:
         results = get_psaw_submissions(query)
@@ -98,13 +113,18 @@ def get_results(query: SearchQuery):
 
     return results
 
-def get_praw_submissions(query: SearchQuery):
+def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
     """Grab submissions using PRAW based on the SearchQuery object."""
     sub_list = query.subreddit.split(',')
 
     # Get a list of subreddits to be included and excluded from the search.
     include = [sub for sub in sub_list if not sub.startswith('!')]
     exclude = [sub.replace('!', '') for sub in sub_list if sub.startswith('!')]
+
+    # Filter out subreddits that do not exist.
+    nonexistent_subs = get_nonexistent_subreddits(include, exclude)
+    include = [sub for sub in include if sub not in nonexistent_subs]
+    exclude = [sub for sub in exclude if sub not in nonexistent_subs]
 
     lim = query.limit
     submissions_to_keep = []
@@ -128,21 +148,17 @@ def get_praw_submissions(query: SearchQuery):
             if 'front' in sub_list:
                 subreddit = reddit.front
             else:
-                # PRAW uses + and - to chain subreddits
-                sub_str = query.subreddit.replace(',!', '-')
-                sub_str = sub_str.replace(',', '+')
-                subreddit = reddit.subreddit(sub_str)
-                # Exclusions are accounted for in the sub_str here.
-                exclude = []
+                # PRAW uses + chain subreddits
+                subreddit = reddit.subreddit('+'.join(include))
 
             if query.praw_sort == 'hot':
                 submissions = subreddit.hot(limit=lim, params={'after':last}) 
             elif query.praw_sort == 'top':
-                submissions = subreddit.top(time_filter=query.time_filter, params={'after':last}) 
+                submissions = subreddit.top(limit=lim, time_filter=query.time_filter, params={'after':last}) 
             elif query.praw_sort == 'new':
                 submissions = subreddit.new(limit=lim, params={'after':last}) 
             elif query.praw_sort == 'controversial':
-                submissions = subreddit.controversial(time_filter=query.time_filter, limit=lim, params={'after':last}) 
+                submissions = subreddit.controversial(limit=lim, time_filter=query.time_filter, params={'after':last}) 
             elif query.praw_sort == 'rising':
                 submissions = subreddit.rising(limit=lim, params={'after':last}) 
             elif query.praw_sort == 'random rising':
@@ -168,21 +184,32 @@ def get_praw_submissions(query: SearchQuery):
         last = submissions_to_keep[-1].fullname
  
     results = get_submission_data(submissions_to_keep)
-    return results
+    return (results, nonexistent_subs)
 
-
-def get_psaw_submissions(query: SearchQuery):
+def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
     """Grab submissions using PSAW based on the SearchQuery object."""
-
-    # Convert user input date to utc
-    start_date = int(query.start_date.timestamp())
-    end_date = int(query.end_date.timestamp())
 
     # Drop 'all' from subreddit list if it exists (invalid for psaw)
     sub_list = query.subreddit.split(',')
     if 'all' in sub_list:
         sub_list.remove('all')
-    sub_str = ','.join(sub_list)
+
+    include = [sub for sub in sub_list if not sub.startswith('!')]
+    exclude = [sub.replace('!', '') for sub in sub_list if sub.startswith('!')]
+
+    # Filter out subreddits that do not exist.
+    nonexistent_subs = get_nonexistent_subreddits(include, exclude)
+    include = [sub for sub in include if sub not in nonexistent_subs]
+    exclude = [sub for sub in exclude if sub not in nonexistent_subs]
+
+    # Combine the valid subreddits into an appropriately formatted string
+    sub_str = ','.join(include)
+    if exclude:
+        sub_str += ',!' + ',!'.join(exclude)
+
+    # Convert user input date to utc
+    start_date = int(query.start_date.timestamp())
+    end_date = int(query.end_date.timestamp())
 
     lim = query.limit
     submissions_to_keep = []
@@ -190,7 +217,6 @@ def get_psaw_submissions(query: SearchQuery):
     count = 0
 
     while len(submissions_to_keep) < query.limit:
-
         submissions = list(api.search_submissions(
             q=query.terms, 
             subreddit=sub_str, 
@@ -200,7 +226,6 @@ def get_psaw_submissions(query: SearchQuery):
             sort_type=query.psaw_sort, 
             params={'after':last}
         ))
-
         len1 = len(submissions_to_keep)
         # Find submissions to keep: ignore stickied, removed, or deleted posts.
         submissions_to_keep += [sub for sub in submissions if sub.stickied is False and \
@@ -215,4 +240,4 @@ def get_psaw_submissions(query: SearchQuery):
         lim = query.limit - len(submissions_to_keep)
 
     results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
-    return results
+    return (results, nonexistent_subs)

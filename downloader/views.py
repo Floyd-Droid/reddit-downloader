@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -78,11 +79,17 @@ class SearchResultsView(View):
 
     def get(self, request, *args, **kwargs):
         query = self.get_object()
-        results = get_results(query)
+        results, non_existent_subs = get_results(query)
+
+        # If any subreddits do not exist, inform the user that they were ignored.
+        if non_existent_subs:
+            subs_str = ', '.join(non_existent_subs)
+            messages.info(request, f"The following subreddits were ignored, since they do not exist: {subs_str}.")
+
         context = {
             'results': results,
         }
-        return render(self.request, self.template_name, context)
+        return render(request, self.template_name, context)
 
 
 class PreviousSearchView(FormView):

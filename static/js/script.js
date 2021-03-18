@@ -49,39 +49,41 @@ $(document).ready(function () {
   $('#remove-queries-form').submit(function (e) {
     e.preventDefault();
   })
-
+ 
+  // Any .rm-btn element will need to be added to the ajax POST request
+  // to properly update the history/favorites table
   $(".rm-btn").click(function (event) {
     var form = $(this).closest('form')[0];
-    let action = form.action
-    let data = $(this).closest('form').serializeArray()
+    let action = form.action;
+    let data = $(this).closest('form').serializeArray();
 
-    let queryIds = []
+    let queryIds = [];
     let selectedRows = dTable.rows('.selected').data();
     $.each(selectedRows, function (i, item) {
-      queryIds.push(item[9])
+      queryIds.push(item[9]);
     })
 
     // There must be at least one row selected.
     if (queryIds.length == 0) {
-      alert("Please select at least one row.")
+      alert("Please select at least one row.");
       return
     }
 
     // Add the clicked button and query ids to the serialized data.
-    data.push({ name: this.name, value: this.value}, {name:'query_ids', value: JSON.stringify(queryIds)})
+    data.push({ name: this.name, value: this.value}, {name:'query_ids', value: JSON.stringify(queryIds)});
 
-    // Create a POST ajax call. Send the submissions ids and serialized form data.
+    // Create a POST ajax call. Send the query ids and serialized form data.
     $.ajax({
       type: "POST",
       url: action,
       data: data,
-      success: function (data) {
+      success: function (response) {
         // Reload to display the updated table.
         location.reload();
       },
-      error: function (data) {
-        alert('error');
+      error: function (response) {
+        alert(response.responseJSON['error']);
       }
-    })
+    });
   });
 });

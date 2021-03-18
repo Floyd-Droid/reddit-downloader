@@ -29,10 +29,13 @@ class LoginView(View):
     template_name = 'authorization/login.html'
 
     def get(self, request, *args, **kwargs):
-        context = {
-            "auth_url": AUTH_URL
-        }
-        return render(request, self.template_name, context)
+        if request.session.get('authenticated', False):
+            return redirect(reverse('downloader:search-main'))
+        else:
+            context = {
+                "auth_url": AUTH_URL
+            }
+            return render(request, self.template_name, context)
 
 
 class SearchView(View):
@@ -79,14 +82,15 @@ class SearchResultsView(View):
 
     def get(self, request, *args, **kwargs):
         query = self.get_object()
-        results, non_existent_subs = get_results(query)
+        results, non_existent_subreddits = get_results(query)
 
         # If any subreddits do not exist, inform the user that they were ignored.
-        if non_existent_subs:
-            subs_str = ', '.join(non_existent_subs)
+        if non_existent_subreddits:
+            subs_str = ', '.join(non_existent_subreddits)
             messages.info(request, f"The following subreddits were ignored, since they do not exist: {subs_str}.")
 
         context = {
+            'query': query,
             'results': results,
         }
         return render(request, self.template_name, context)

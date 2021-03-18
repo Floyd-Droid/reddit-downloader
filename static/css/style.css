@@ -10,7 +10,7 @@
 }
 
 #navbar {
-  background-color: #cee3f8;/*#EFF7FF;*/
+  background-color: #cee3f8;
   color:black;
   border-bottom: 1px ridge gray;
 }
@@ -59,21 +59,76 @@ div.login-wrapper {
   box-shadow: 0 5px 5px gray;
 }
 
+.table-form-container {
+  border: 1px ridge #14227b;
+  border-radius: 5px;
+  margin: 5vh 5vw 10vh 5vw;
+
+}
+
+.table-section-header {
+  background-color: #14227b;
+  color: white;
+  padding: 10px 20px 10px 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  z-index: 5;
+  box-shadow: 0 5px 5px gray;
+}
+
+.table-container {
+  border-bottom: 1px ridge #14227b;
+  margin: 0 5vw;
+  padding-bottom: 5px;
+}
+
+.table-container .dt-buttons {
+  margin-left: 5%;
+}
+
+div.opt-container {
+  padding: 20px;
+
+}
 
 div#time_options { /* time options for search form */
   border-top: 1px ridge #14227b;
   border-bottom: 1px ridge #14227b;
 }
 
+div.btn-container {
+  margin-top: 3em;
+  right:0;
+}
+
+button.btn {
+  width: 15%;
+}
+
+button.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #007bff; 
+  cursor: pointer;
+}
+
+button.link-btn:hover {
+  text-decoration: underline;
+}
+
+div.message-wrapper { 
+  background-color: rgba(255, 165, 0, 0.3);
+  border: 3px ridge orange;
+  padding: 20px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  border-radius: 5px;
+}
 
 .errorlist {
   color: red;
 }
-
-
-/* label[for="id_start_date"] {
-  float: top;
-} */
 
 span.top {
   display: block;
@@ -82,9 +137,6 @@ span.top {
 
 
 @media (min-width: 768px) {
-  #sidebar-wrapper {
-    margin-left: 0;
-  }
 
   #page-content-wrapper {
     min-width: 0;

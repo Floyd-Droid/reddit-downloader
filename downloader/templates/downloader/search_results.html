@@ -1,47 +1,58 @@
 {% extends 'base.html' %}
 {% block title %}Search Results{% endblock %}
 {% block content %}
-
-<div class="table-container mx-4 mt-4">
-  <div class="table-section-header">
-    <h3>Search Results</h3>
+{% if messages %}
+<div class="container message-wrapper">
+  <ul class="messages">
+    {% for message in messages %}
+    <li {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+<div class="table-form-container">
+  <div class="table-container mx-4 mt-4">
+    <div class="table-section-header">
+      <h3>Search Results</h3>
+    </div>
+    {% if results %}
+    <table class="table table-sm table-striped table-bordered" id="sub-table">
+      <p class="help-text">
+        Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
+      </p>
+      <thead class="thead-dark">
+        <tr>
+          <th></th>
+          <th>Title</th>
+          <th>Score</th>
+          <th>Permalink</th>
+          <th>External URL</th>
+          <th>Comments</th>
+          <th>Created</th>
+          <th>Body</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in results %}
+        <tr>
+          <td class="align-middle"></td>
+          <td class="align-middle">{{sub.title}}</td>
+          <td class="align-middle">{{sub.score}}</td>
+          <td class="align-middle">{{sub.permalink|urlizetrunc:50}}</td>
+          <td class="align-middle">{{sub.url|urlizetrunc:50}}</td>
+          <td class="align-middle">{{sub.num_comments}}</td>
+          <td class="align-middle">{{sub.date}}</td>
+          <td class="align-middle">{{sub.selftext}}</td>
+          <td>{{sub.id}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="empty-msg">
+      <p class="empty-msg">No results match your query</p>
+    </div>
+    {% endif %}
   </div>
-  {% if results %}
-  <table class="table table-sm table-striped table-bordered" id="sub-table">
-    <p class="help-text">
-      Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
-    </p>
-    <thead class="thead-dark">
-      <tr>
-        <th></th>
-        <th>Title</th>
-        <th>Score</th>
-        <th>Permalink</th>
-        <th>External URL</th>
-        <th>Comments</th>
-        <th>Created</th>
-        <th>Body</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for sub in results %}
-      <tr>
-        <td class="align-middle"></td>
-        <td class="align-middle">{{sub.title}}</td>
-        <td class="align-middle">{{sub.score}}</td>
-        <td class="align-middle">{{sub.permalink|urlizetrunc:50}}</td>
-        <td class="align-middle">{{sub.url|urlizetrunc:50}}</td>
-        <td class="align-middle">{{sub.num_comments}}</td>
-        <td class="align-middle">{{sub.date}}</td>
-        <td class="align-middle">{{sub.selftext}}</td>
-        <td>{{sub.id}}</td>
-      </tr>
-      {% endfor %}
-  </table>
-  {% else %}
-  <div class="empty-msg">
-    <p class="empty-msg">No results match your query</p>
-  </div>
-  {% endif %}
+</div>
 {% endblock %}

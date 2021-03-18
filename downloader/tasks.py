@@ -8,7 +8,7 @@ from prawcore import NotFound
 
 import datetime
 import praw
-from typing import Tuple
+from typing import Tuple, Optional
 from psaw import PushshiftAPI
 import environ
 import uuid
@@ -16,17 +16,16 @@ import uuid
 env = environ.Env()
 environ.Env.read_env()
 
-
 reddit = praw.Reddit(
     client_id=env.str('CLIENT_ID'),
     client_secret=env.str('CLIENT_SECRET'),
     user_agent='jf_downloader',
-    redirect_uri = 'http://localhost:8000/authorize'
+    redirect_uri='http://localhost:8000/authorize'
 )
 
-scopes = ['*']
+scopes = ['identity', 'mysubreddits', 'read']
 state = str(uuid.uuid4())
-AUTH_URL = reddit.auth.url(scopes, state)
+AUTH_URL = reddit.auth.url(scopes, state, "permanent")
 
 api = PushshiftAPI(reddit)
 
@@ -53,12 +52,14 @@ def authorize(request):
         return 'Missing access token'
 
     # Use the code to authorize our reddit instance, and save the user's name to session.
-    reddit.auth.authorize(auth_code)  
+    refresh_token = reddit.auth.authorize(auth_code) 
+
+    request.session["refresh_token"] = refresh_token
     request.session["authenticated"] = True
     request.session["current_user"] = str(reddit.user.me())
 
     # Add user to database if not present.
-    username = request.session["current_user"]
+    username = request.session.get("current_user", None)
     if not User.objects.filter(username=username).exists():
         new_user = User.objects.create(username=username)
         new_user.save()
@@ -79,7 +80,7 @@ def get_nonexistent_subreddits(include: list, exclude: list) -> list:
 
     return non_existent
 
-def get_submission_data(submissions: list, sort: str='') -> list:
+def get_submission_data(submissions: list, sort: Optional[str] = None) -> list:
     """From the passed generator, get submission data as a list of dictionaries."""
     sub_data = []
     for sub in submissions:
@@ -90,9 +91,9 @@ def get_submission_data(submissions: list, sort: str='') -> list:
     
     # Sort the data if not relying on a Reddit sorting algorithm.
     if sort == 'num_comments':
-        sub_data.sort(key=sort_by_comments)
+        sub_data.sort(key=sort_by_comments, reverse=True)
     elif sort == 'score':
-        sub_data.sort(key=sort_by_score)
+        sub_data.sort(key=sort_by_score, reverse=True)
 
     return sub_data
 
@@ -104,9 +105,9 @@ def sort_by_score(item):
 
 def get_results(query: SearchQuery) -> Tuple[list, list]:
     """Determine which function is used to grab search results."""
-    if query.praw_sort is not None:             
+    if query.praw_sort:             
         results = get_praw_submissions(query)
-    elif query.psaw_sort is not None:
+    elif query.psaw_sort:
         results = get_psaw_submissions(query)
     else:
         pass
@@ -238,6 +239,10 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
             else:
                 count += 1
         lim = query.limit - len(submissions_to_keep)
+        last = submissions_to_keep[-1].fullname
 
     results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
     return (results, nonexistent_subs)
+
+def get_single_submission(id_: str):
+    return reddit.submission(id=id_)

@@ -41,13 +41,11 @@ class SearchQuery(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     terms = models.CharField(
         max_length=512, 
-        blank=True, 
-        null=True
+        blank=True
     )
     subreddit = models.CharField(
         max_length=250, 
-        blank=True, 
-        null=True, 
+        blank=True,  
         help_text="<br>comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit"
     )
     syntax = models.CharField(
@@ -55,18 +53,16 @@ class SearchQuery(models.Model):
         choices=SYNTAX_CHOICES,
         default='lucene'
     )
-    limit = models.IntegerField(default=25)
+    limit = models.PositiveIntegerField(default=25)
     praw_sort = models.CharField(
         max_length=13,
         choices=PRAW_SORT_CHOICES,
-        blank=True,
-        null=True
+        blank=True
     )
     time_filter = models.CharField(
         max_length=5,
         choices=TIME_FILTER_CHOICES,
-        blank=True,
-        null=True
+        blank=True
     )
     start_date = models.DateTimeField(
         blank=True, 
@@ -77,8 +73,7 @@ class SearchQuery(models.Model):
     psaw_sort = models.CharField(
         max_length=18,
         choices=PSAW_SORT_CHOICES,
-        blank=True,
-        null=True
+        blank=True
     )
     date_created = models.DateTimeField(auto_now=True)
     favorite = models.BooleanField(default=False)

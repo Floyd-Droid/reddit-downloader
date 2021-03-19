@@ -1,14 +1,25 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse, reverse_lazy
+from django.http import (
+    HttpResponse, 
+    HttpResponseBadRequest
+)
+from django.shortcuts import (
+    render, 
+    get_object_or_404, 
+    redirect
+)
+from django.urls import (
+    reverse, 
+    reverse_lazy
+)
 from .models import (
     SearchQuery,
     User
 )
-from prawcore import NotFound
 
 import datetime
 import praw
-from typing import Tuple, Optional
+from prawcore.exceptions import NotFound, Forbidden
+from typing import List, Tuple, Optional
 from psaw import PushshiftAPI
 import environ
 import uuid
@@ -38,18 +49,14 @@ def authorize(request):
     auth_code = request.GET.get('code', None)
     error = request.GET.get('error', None)
 
-    #TODO - handle these cases
     if returned_state != state:
-        print("UNAUTHORIZED")
-        return 'Unauthorized'  
+        return HttpResponseBadRequest('State codes do not match')
 
     if error:
-        print(error)
-        return
+        return HttpResponse(error)
 
     if auth_code is None:
-        print("MISSING CODE")
-        return 'Missing access token'
+        return HttpResponse('Missing access token', status=401)
 
     # Use the code to authorize our reddit instance, and save the user's name to session.
     refresh_token = reddit.auth.authorize(auth_code) 
@@ -80,6 +87,18 @@ def get_nonexistent_subreddits(include: list, exclude: list) -> list:
 
     return non_existent
 
+def get_forbidden_subreddits(subs: List[str]) -> List[str]:
+    """Return a list of subreddits that are forbidden to the user."""
+    forbidden_subs = []
+    for sub in subs:
+        # Attempt to access subreddit info
+        try:
+            test_sub = reddit.subreddit(sub)
+            unlazify = test_sub.name
+        except Forbidden:
+            forbidden_subs.append(sub)
+    return forbidden_subs
+
 def get_submission_data(submissions: list, sort: Optional[str] = None) -> list:
     """From the passed generator, get submission data as a list of dictionaries."""
     sub_data = []
@@ -103,7 +122,7 @@ def sort_by_comments(item):
 def sort_by_score(item):
     return item['score']
 
-def get_results(query: SearchQuery) -> Tuple[list, list]:
+def get_results(query: SearchQuery) -> Tuple[list, list, list]:
     """Determine which function is used to grab search results."""
     if query.praw_sort:             
         results = get_praw_submissions(query)
@@ -114,7 +133,7 @@ def get_results(query: SearchQuery) -> Tuple[list, list]:
 
     return results
 
-def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
+def get_praw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
     """Grab submissions using PRAW based on the SearchQuery object."""
     sub_list = query.subreddit.split(',')
 
@@ -127,6 +146,10 @@ def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
     include = [sub for sub in include if sub not in nonexistent_subs]
     exclude = [sub for sub in exclude if sub not in nonexistent_subs]
 
+    # Filter out subreddits forbidden to the user.
+    forbidden_subs = get_forbidden_subreddits(include)
+    include = [sub for sub in include if sub not in forbidden_subs]
+
     lim = query.limit
     submissions_to_keep = []
     last = None
@@ -136,13 +159,14 @@ def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
     while len(submissions_to_keep) < query.limit:
         if query.terms:
             subreddit = reddit.subreddit('+'.join(include))
-            submissions = subreddit.search(
+            submissions = list(subreddit.search(
                 query=query.terms,
                 syntax=query.syntax, 
                 sort=query.praw_sort, 
                 time_filter=query.time_filter, 
                 limit=lim,
                 params={'after':last}
+                )
             )
         else: 
             # Set up all possible reddit sorts without search terms
@@ -153,18 +177,24 @@ def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
                 subreddit = reddit.subreddit('+'.join(include))
 
             if query.praw_sort == 'hot':
-                submissions = subreddit.hot(limit=lim, params={'after':last}) 
+                submissions = list(subreddit.hot(limit=lim, params={'after':last})) 
             elif query.praw_sort == 'top':
-                submissions = subreddit.top(limit=lim, time_filter=query.time_filter, params={'after':last}) 
+                submissions = list(subreddit.top(limit=lim, time_filter=query.time_filter, params={'after':last}))
             elif query.praw_sort == 'new':
-                submissions = subreddit.new(limit=lim, params={'after':last}) 
+                submissions = list(subreddit.new(limit=lim, params={'after':last}))
             elif query.praw_sort == 'controversial':
-                submissions = subreddit.controversial(limit=lim, time_filter=query.time_filter, params={'after':last}) 
+                submissions = list(subreddit.controversial(limit=lim, time_filter=query.time_filter, params={'after':last})) 
             elif query.praw_sort == 'rising':
-                submissions = subreddit.rising(limit=lim, params={'after':last}) 
+                submissions = list(subreddit.rising(limit=lim, params={'after':last})) 
             elif query.praw_sort == 'random rising':
-                submissions = subreddit.random_rising(limit=lim, params={'after':last}) 
-        
+                submissions = list(subreddit.random_rising(limit=lim, params={'after':last}))
+
+        if not submissions:
+            break
+
+        # Use the fullname of the last submission as a starting point for the next search.
+        last = submissions[-1].fullname
+
         # If the length of the list remains the same over multiple iterations, we have
         # likely retrieved all possible results for this search.
         len1 = len(submissions_to_keep)
@@ -181,13 +211,11 @@ def get_praw_submissions(query: SearchQuery) -> Tuple[list, list]:
                 count += 1
 
         lim = query.limit - len(submissions_to_keep)
-        # Use the fullname of the last submission as a starting point for the next search.
-        last = submissions_to_keep[-1].fullname
  
     results = get_submission_data(submissions_to_keep)
-    return (results, nonexistent_subs)
+    return (results, nonexistent_subs, forbidden_subs)
 
-def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
+def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
     """Grab submissions using PSAW based on the SearchQuery object."""
 
     # Drop 'all' from subreddit list if it exists (invalid for psaw)
@@ -198,10 +226,13 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
     include = [sub for sub in sub_list if not sub.startswith('!')]
     exclude = [sub.replace('!', '') for sub in sub_list if sub.startswith('!')]
 
-    # Filter out subreddits that do not exist.
+    # Filter out subreddits that do not exist, or are forbidden.
     nonexistent_subs = get_nonexistent_subreddits(include, exclude)
     include = [sub for sub in include if sub not in nonexistent_subs]
     exclude = [sub for sub in exclude if sub not in nonexistent_subs]
+
+    forbidden_subs = get_forbidden_subreddits(include)
+    include = [sub for sub in include if sub not in forbidden_subs]
 
     # Combine the valid subreddits into an appropriately formatted string
     sub_str = ','.join(include)
@@ -226,7 +257,11 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
             before=end_date, 
             sort_type=query.psaw_sort, 
             params={'after':last}
-        ))
+            )
+        )
+        if not submissions:
+            break
+        last = submissions[-1].fullname
         len1 = len(submissions_to_keep)
         # Find submissions to keep: ignore stickied, removed, or deleted posts.
         submissions_to_keep += [sub for sub in submissions if sub.stickied is False and \
@@ -238,11 +273,10 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list]:
                 break
             else:
                 count += 1
-        lim = query.limit - len(submissions_to_keep)
-        last = submissions_to_keep[-1].fullname
+        lim = query.limit - len(submissions_to_keep)        
 
     results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
-    return (results, nonexistent_subs)
+    return (results, nonexistent_subs, forbidden_subs)
 
 def get_single_submission(id_: str):
     return reddit.submission(id=id_)

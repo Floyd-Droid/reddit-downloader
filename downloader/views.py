@@ -22,7 +22,6 @@ from .tasks import (
     get_praw_submissions,
     get_psaw_submissions,
 )
-import json
 
 
 class LoginView(View):
@@ -82,12 +81,16 @@ class SearchResultsView(View):
 
     def get(self, request, *args, **kwargs):
         query = self.get_object()
-        results, non_existent_subreddits = get_results(query)
+        results, non_existent_subreddits, forbidden_subreddits = get_results(query)
 
-        # If any subreddits do not exist, inform the user that they were ignored.
+        # If any subreddits do not exist or are forbidden, inform the user that they were ignored.
         if non_existent_subreddits:
             subs_str = ', '.join(non_existent_subreddits)
-            messages.info(request, f"The following subreddits were ignored, since they do not exist: {subs_str}.")
+            messages.info(request, f"The following subreddits do not exist: {subs_str}.")
+        
+        if forbidden_subreddits:
+            subs_str = ', '.join(forbidden_subreddits)
+            messages.info(request, f"The following subreddits are forbidden: {subs_str}.")
 
         context = {
             'query': query,

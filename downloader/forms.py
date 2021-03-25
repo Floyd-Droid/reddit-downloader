@@ -15,8 +15,11 @@ class SearchForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SearchForm, self).__init__(*args, **kwargs)
-        self.fields['start_date'].input_formats = ['%m/%d/%Y']
-        self.fields['end_date'].input_formats = ['%m/%d/%Y']
+        self.fields['start_date'].input_formats = ['%Y-%m-%d', '%Y-%m-%d %H:%M:%S']
+        self.fields['end_date'].input_formats = ['%Y-%m-%d', '%Y-%m-%d %H:%M:%S']
+        self.fields['url'].label = 'URL'
+        self.fields['terms'].label = 'Search terms'
+        self.fields['subreddit'].label = 'Subreddit(s)'
         self.data = kwargs.get('data')
 
     def clean_subreddit(self):
@@ -42,13 +45,32 @@ class SearchForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(SearchForm, self).clean()
+        search_option = self.data.get('search_option')
         praw_sort = cleaned_data.get('praw_sort')
         subreddit_str = cleaned_data.get('subreddit')
         subreddit_list = subreddit_str.split(',')
+
+        # Clear all search criteria if the user gives a URL.
+        if search_option == 'url':
+            cleaned_data['terms'] = cleaned_data['subreddit'] = ''
+            cleaned_data['time_filter'] = cleaned_data['praw_sort'] = cleaned_data['psaw_sort'] = ''
+            cleaned_data['start_date'] = cleaned_data['end_date'] = None
+            cleaned_data['limit'] = 1
+            if not cleaned_data.get('url'):
+                self.add_error('url', 'Please enter a valid URL')
+            return cleaned_data
+        elif search_option == 'terms':
+            cleaned_data['url'] = ''
+
         if self.data.get("time_option") == 'time_filter':
             # Date range options are excluded
             cleaned_data['start_date'] = cleaned_data['end_date'] = None
             cleaned_data['psaw_sort'] = ''
+
+            if cleaned_data.get('time_filter') == '':
+                self.add_error('time_filter', 'Please select a filter')
+            if cleaned_data.get('praw_sort') == '':
+                self.add_error('praw_sort', 'Please select a sort')
 
             # Search terms are not allowed for front page search or for certain praw sort options.
             if praw_sort in ['controversial', 'rising', 'random_rising'] or 'front' in subreddit_list:
@@ -62,6 +84,13 @@ class SearchForm(forms.ModelForm):
 
         elif self.data.get("time_option") == 'date_range':
             cleaned_data['time_filter'] = cleaned_data['praw_sort'] = ''
+
+            if cleaned_data.get('start_date') is None:
+                self.add_error('start_date', 'Please enter a start date')
+            if cleaned_data.get('end_date') is None:
+                self.add_error('end_date', 'Please enter an end date')
+            if cleaned_data.get('psaw_sort') == '':
+                self.add_error('psaw_sort', 'Please select a sort')
 
             # front page results not possible for psaw. Remove from subreddit field.
             if 'front' in subreddit_list:

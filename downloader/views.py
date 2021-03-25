@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -8,6 +8,7 @@ from django.views.generic import (
     FormView,
     DetailView
 )
+from jf_reddit.settings import development as settings
 from .forms import (
     SearchForm,
 )
@@ -21,7 +22,9 @@ from .tasks import (
     get_submission_data,
     get_praw_submissions,
     get_psaw_submissions,
+    get_submission_data_by_url,
 )
+import json
 
 
 class LoginView(View):
@@ -41,12 +44,10 @@ class SearchView(View):
     template_name = 'downloader/search_view.html'
     model = SearchQuery
     form_class = SearchForm
-    context = {
-        'form': form_class
-    }
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, self.context)
+        context = {'form': self.form_class}
+        return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
         # If re-doing a search, create a new query from the existing one.
@@ -65,11 +66,11 @@ class SearchView(View):
                 query.user = User.objects.get(username=username)
                 query.save()
             else:
-                self.context['form'] = form
-                return render(self.request, self.template_name, self.context)
+                context = {'form': form}
+                return render(self.request, self.template_name, context)
 
         return redirect(reverse('downloader:search-results', kwargs={'pk': query.pk}))
-        
+
 
 class SearchResultsView(View):
     """Display the results of a Search Query."""
@@ -81,16 +82,19 @@ class SearchResultsView(View):
 
     def get(self, request, *args, **kwargs):
         query = self.get_object()
-        results, non_existent_subreddits, forbidden_subreddits = get_results(query)
+        if query.url:
+            results = get_submission_data_by_url(query.url)
+        else:
+            results, non_existent_subreddits, forbidden_subreddits = get_results(query)
 
-        # If any subreddits do not exist or are forbidden, inform the user that they were ignored.
-        if non_existent_subreddits:
-            subs_str = ', '.join(non_existent_subreddits)
-            messages.info(request, f"The following subreddits do not exist: {subs_str}.")
-        
-        if forbidden_subreddits:
-            subs_str = ', '.join(forbidden_subreddits)
-            messages.info(request, f"The following subreddits are forbidden: {subs_str}.")
+            # If any subreddits do not exist or are forbidden, inform the user that they were ignored.
+            if non_existent_subreddits:
+                subs_str = ', '.join(non_existent_subreddits)
+                messages.info(request, f"The following subreddits do not exist: {subs_str}.")
+            
+            if forbidden_subreddits:
+                subs_str = ', '.join(forbidden_subreddits)
+                messages.info(request, f"The following subreddits are forbidden: {subs_str}.")
 
         context = {
             'query': query,
@@ -158,8 +162,7 @@ class RemoveQueriesView(View):
             elif 'add-faves' in request.POST:
                 objs.update(favorite=True)
             else:
-                print("Something went wrong")
-                return JsonResponse({'error': '???'}, status=400)
+                return JsonResponse({'error': 'Something went wrong'}, status=400)
             return JsonResponse({}, status=200)
         else:
             return JsonResponse({'error': 'Request is not ajax.'}, status=400)    

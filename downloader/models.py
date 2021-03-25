@@ -39,6 +39,7 @@ class SearchQuery(models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    url = models.URLField(max_length=250, blank=True)
     terms = models.CharField(
         max_length=512, 
         blank=True
@@ -46,7 +47,7 @@ class SearchQuery(models.Model):
     subreddit = models.CharField(
         max_length=250, 
         blank=True,  
-        help_text="<br>comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit"
+        help_text="Comma separated: askreddit,askscience <br>Use ! to exclude: all,!askreddit"
     )
     syntax = models.CharField(
         max_length=11,
@@ -67,7 +68,7 @@ class SearchQuery(models.Model):
     start_date = models.DateTimeField(
         blank=True, 
         null=True, 
-        help_text="(M/D/YYYY)"
+        help_text="(YYYY-MM-DD [HH:MM:SS])"
     )
     end_date = models.DateTimeField(blank=True, null=True)
     psaw_sort = models.CharField(

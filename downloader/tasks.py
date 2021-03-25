@@ -15,13 +15,13 @@ from .models import (
     SearchQuery,
     User
 )
+from prawcore.exceptions import NotFound, Forbidden
+from psaw import PushshiftAPI
+from typing import List, Dict, Tuple, Optional
 
 import datetime
-import praw
-from prawcore.exceptions import NotFound, Forbidden
-from typing import List, Tuple, Optional
-from psaw import PushshiftAPI
 import environ
+import praw
 import uuid
 
 env = environ.Env()
@@ -66,7 +66,7 @@ def authorize(request):
     request.session["current_user"] = str(reddit.user.me())
 
     # Add user to database if not present.
-    username = request.session.get("current_user", None)
+    username = request.session.get("current_user")
     if not User.objects.filter(username=username).exists():
         new_user = User.objects.create(username=username)
         new_user.save()
@@ -78,7 +78,7 @@ def get_nonexistent_subreddits(include: list, exclude: list) -> list:
     non_existent = []
     all_subs = include + exclude
     for sub in all_subs:
-        if sub == 'front' or sub == 'all':
+        if sub == 'front' or sub == 'all' or not sub:
             continue
         try:
             reddit.subreddits.search_by_name(sub, exact=True)
@@ -91,6 +91,8 @@ def get_forbidden_subreddits(subs: List[str]) -> List[str]:
     """Return a list of subreddits that are forbidden to the user."""
     forbidden_subs = []
     for sub in subs:
+        if sub == 'front' or sub == 'all' or not sub:
+            continue
         # Attempt to access subreddit info
         try:
             test_sub = reddit.subreddit(sub)
@@ -99,7 +101,7 @@ def get_forbidden_subreddits(subs: List[str]) -> List[str]:
             forbidden_subs.append(sub)
     return forbidden_subs
 
-def get_submission_data(submissions: list, sort: Optional[str] = None) -> list:
+def get_submission_data(submissions: list, sort: Optional[str] = None) -> List[Dict]:
     """From the passed generator, get submission data as a list of dictionaries."""
     sub_data = []
     for sub in submissions:
@@ -124,12 +126,12 @@ def sort_by_score(item):
 
 def get_results(query: SearchQuery) -> Tuple[list, list, list]:
     """Determine which function is used to grab search results."""
-    if query.praw_sort:             
+    if query.praw_sort:
         results = get_praw_submissions(query)
     elif query.psaw_sort:
         results = get_psaw_submissions(query)
     else:
-        pass
+        raise ValueError('Missing sort criteria')
 
     return results
 
@@ -278,5 +280,18 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
     results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
     return (results, nonexistent_subs, forbidden_subs)
 
-def get_single_submission(id_: str):
-    return reddit.submission(id=id_)
+def get_submission_by_id(id_: str):
+    try:
+        sub = reddit.submission(id=id_)
+    except (NotFound, Forbidden):
+        sub = None
+
+    return sub
+
+def get_submission_data_by_url(url: str) -> List[Dict]:
+    try:
+        sub = reddit.submission(url=url)
+        result = get_submission_data([sub])
+        return result
+    except (NotFound, Forbidden):
+        return []

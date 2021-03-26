@@ -15,6 +15,7 @@ from .models import (
     SearchQuery,
     User
 )
+from praw.exceptions import InvalidURL
 from prawcore.exceptions import NotFound, Forbidden
 from psaw import PushshiftAPI
 from typing import List, Dict, Tuple, Optional
@@ -283,6 +284,7 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
 def get_submission_by_id(id_: str):
     try:
         sub = reddit.submission(id=id_)
+        unlazify = sub.title
     except (NotFound, Forbidden):
         sub = None
 
@@ -291,7 +293,8 @@ def get_submission_by_id(id_: str):
 def get_submission_data_by_url(url: str) -> List[Dict]:
     try:
         sub = reddit.submission(url=url)
+        unlazify = sub.title
         result = get_submission_data([sub])
         return result
-    except (NotFound, Forbidden):
+    except (NotFound, Forbidden, InvalidURL):
         return []

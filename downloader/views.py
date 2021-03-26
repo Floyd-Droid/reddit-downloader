@@ -9,8 +9,12 @@ from django.views.generic import (
     DetailView
 )
 from jf_reddit.settings import development as settings
+from .export import (
+    download_results
+)
 from .forms import (
     SearchForm,
+    DownloadForm
 )
 from .models import (
     User,
@@ -25,6 +29,9 @@ from .tasks import (
     get_submission_data_by_url,
 )
 import json
+import os
+import shutil
+import zipfile
 
 
 class LoginView(View):
@@ -75,6 +82,7 @@ class SearchView(View):
 class SearchResultsView(View):
     """Display the results of a Search Query."""
     template_name = 'downloader/search_results.html'
+    download_form = DownloadForm
 
     def get_object(self, *args, **kwargs):
         id_ = self.kwargs.get('pk')
@@ -99,6 +107,7 @@ class SearchResultsView(View):
         context = {
             'query': query,
             'results': results,
+            'form': self.download_form
         }
         return render(request, self.template_name, context)
 
@@ -166,3 +175,52 @@ class RemoveQueriesView(View):
             return JsonResponse({}, status=200)
         else:
             return JsonResponse({'error': 'Request is not ajax.'}, status=400)    
+
+
+class GenerateFilesView(FormView):
+    form_class = DownloadForm
+
+    def get_object(self, *args, **kwargs):
+        id_ = self.kwargs.get('pk')
+        return get_object_or_404(SearchQuery, pk=id_)
+
+    def post(self, request, *args, **kwargs):
+        query = self.get_object()
+        if request.is_ajax:
+            form = DownloadForm(data=request.POST)
+            if form.is_valid():
+                sub_str = request.POST.get('sub_ids')
+                sub_ids = json.loads(sub_str)
+
+                tmp_dirname = download_results(query, form.cleaned_data, sub_ids)
+
+                # Return the url that generates/downloads the files in the response
+                url = reverse('downloader:download', kwargs={'tmp':tmp_dirname})
+                return JsonResponse({'url': url}, status=200)
+            else:
+                return JsonResponse({'error': form.errors.as_json()}, status=400)
+        else:
+            return JsonResponse({'error': 'Request is not ajax.'}, status=400)
+
+
+class DownloadView(View):
+
+    def get(self, request, *args, **kwargs):
+        dirname = self.kwargs.get('tmp')
+        tmp_path = os.path.join(settings.MEDIA_ROOT, dirname)
+        zname = 'results.zip'
+
+        response = HttpResponse(content_type='application/zip')
+        with zipfile.ZipFile(response, 'w') as f:
+            # Place each generated file into the zip file
+            for folder_name, sub_folders, filenames in os.walk(tmp_path):
+                for filename in filenames:
+                    filepath = os.path.join(folder_name, filename)
+                    zip_path = os.path.join(folder_name.split('/')[-1], os.path.basename(filepath))
+                    f.write(filepath, zip_path)
+
+        response['Content-Disposition'] = 'attachment; filename={}'.format(zname)
+        # Delete the generated files
+        shutil.rmtree(tmp_path)
+
+        return response

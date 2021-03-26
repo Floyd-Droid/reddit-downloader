@@ -96,3 +96,66 @@ class SearchForm(forms.ModelForm):
             if 'front' in subreddit_list:
                 self.add_error('subreddit', "Please either remove 'front' or select the time filter option instead of the date range.")
         return cleaned_data
+
+
+class DownloadForm(forms.Form):
+
+    SUBMISSION_FIELD_CHOICES = (
+        ('title', 'Title'),
+        ('author', 'Author'),
+        ('score', 'Score'),
+        ('upvote_ratio', 'Upvote ratio'),
+        ('selftext', 'Selftext'),
+        ('num_comments', 'Number of comments'),
+        ('created_utc', 'Date created'),
+        ('id', 'ID'),
+        ('permalink', 'Permalink'),
+        ('url', 'URL'),
+        ('subreddit', 'Subreddit'),
+        ('locked', 'Locked'),
+        ('over_18', 'NSFW'),
+        ('spoiler', 'Spoiler'),
+        ('stickied', 'Stickied')
+    )
+    COMMENT_FIELD_CHOICES = (
+        ('author', 'Author'),
+        ('body', 'Text'),
+        ('created_utc', 'Date created'),
+        ('id', 'ID'),
+        ('parent_id', 'Parent ID'),
+        ('is_submitter', 'Is Submitter'),
+        ('edited', 'Edited'),
+        ('score', 'Score'),
+        ('stickied', 'Stickied') 
+    )
+    COMMENT_SORT_CHOICES = (
+        ('confidence', 'Best'),
+        ('top', 'Top'),
+        ('new', 'New'),
+        ('controversial', 'Controversial'),
+        ('old', 'Old'),
+        ('q&a', 'Q&A')
+    )
+
+    get_submission_data = forms.BooleanField(required=False)
+    get_comment_data = forms.BooleanField(required=False)
+    get_external_data = forms.BooleanField(required=False)
+
+    submission_field_options = forms.MultipleChoiceField(
+        choices=SUBMISSION_FIELD_CHOICES,
+        required=False,
+        widget=forms.SelectMultiple(attrs={'size':'15'})
+    )
+    comment_field_options = forms.MultipleChoiceField(
+        choices=COMMENT_FIELD_CHOICES, 
+        required=False,
+        widget=forms.SelectMultiple(attrs={'size':'15'})
+    )
+    comment_sort_option = forms.ChoiceField(
+        choices=COMMENT_SORT_CHOICES, 
+        required=False
+    )
+    comment_limit = forms.IntegerField( 
+        required=False, 
+        help_text="Leave empty to retrieve all comments."
+    )

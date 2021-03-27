@@ -16,12 +16,10 @@ import time
 import wget
 
 
-
 def download_results(query: SearchQuery, form_data: Dict[str, list], sub_ids: List[str]):
     letters = string.ascii_lowercase
     tmp_dirname = ''.join(random.choice(letters) for i in range(10))
     tmp_path = os.path.join(settings.MEDIA_ROOT, tmp_dirname)
-
 
     if form_data.get('get_submission_data'):
         sub_fields = form_data.get('submission_field_options')
@@ -53,7 +51,6 @@ def generate_submissions_file(query: SearchQuery, ids: List[str], field_opts: Li
         },
         "submissions": []
     }
-
     for id_ in ids:
         sub = get_submission_by_id(id_)
 
@@ -183,6 +180,7 @@ def get_submissions_path(query: SearchQuery, tmp_path: str) -> str:
             filename += '-past-' + query.time_filter
 
     filename += '.json'
+    filename = remove_illegal_chars(filename)
     dir_path = os.path.join(tmp_path, 'submissions')
     os.makedirs(dir_path, exist_ok=True)
     
@@ -198,15 +196,22 @@ def get_comments_path(title: str, limit: Optional[int], tmp_path: str) -> str:
     else: 
         filename += '-all'
     filename += '.json'
+    filename = remove_illegal_chars(filename)
     fullpath = os.path.join(dir_path, filename)
     return fullpath
 
 def get_external_path(external_url: str, tmp_path: str) -> str:
     filename = external_url.split('/')[-1]
+    filename = remove_illegal_chars(filename)
     dirpath = os.path.join(tmp_path, 'images')
     os.makedirs(dirpath, exist_ok=True)
     fullpath = os.path.join(dirpath, filename)
     return fullpath
+
+def remove_illegal_chars(filename: str) -> str:
+    illegal_chars = [char for char in '!@#$%&*?:|=+~`}{][><\\/"']
+    legal_name = ['_' if char in illegal_chars else char for char in filename]
+    return "".join(legal_name)
 
 def write_json(fullpath: str, data: Dict[str, list]):
     with open(fullpath, 'w') as f:

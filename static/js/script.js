@@ -5,6 +5,9 @@ $(document).ready(function () {
       orderable: false,
       className: 'select-checkbox',
       targets: 0,
+      // 'render': function (data, type, full, meta) {
+      //   return '<input type="checkbox"/>'
+      // }
     }, {
       // Center cell data
       className: 'dt-center',
@@ -35,14 +38,10 @@ $(document).ready(function () {
     let p = this.parentNode;
     let options = ["controversial", "rising", "random_rising"];
     if (options.includes(this.value)) {
-      if (!p.innerHTML.includes("<span")) {
-        $("<span id='warning_message'>Search terms will be ignored for this option</span>").appendTo(p);
-      }
+      $('#terms-warning').show();
     } else {
       // Remove warning message if a viable option is selected
-      if (p.innerHTML.includes("<span")) {
-        $("#warning_message").remove();
-      }
+      $('#terms-warning').hide();
     }
   });
 
@@ -53,14 +52,14 @@ $(document).ready(function () {
   // Any .rm-btn element will need to be added to the ajax POST request
   // to properly update the history/favorites table
   $(".rm-btn").click(function (event) {
-    var form = $(this).closest('form')[0];
+    let form = $(this).closest('form')[0];
     let action = form.action;
     let data = $(this).closest('form').serializeArray();
 
     let queryIds = [];
     let selectedRows = dTable.rows('.selected').data();
     $.each(selectedRows, function (i, item) {
-      queryIds.push(item[9]);
+      queryIds.push(item[8]);
     })
 
     // There must be at least one row selected.
@@ -82,7 +81,74 @@ $(document).ready(function () {
         location.reload();
       },
       error: function (response) {
-        alert(response.responseJSON['error']);
+        alert(response['error']);
+      }
+    });
+  });
+
+  // Send ajax request to download submission data
+  $("#download-form").submit(function (event) {
+    event.preventDefault();
+    $('#loading-icon').show()
+
+    // Gather the ids of the selected submissions
+    let subIds = [];
+    let selectedRows = dTable.rows('.selected').data();
+    $.each(selectedRows, function (i, item) {
+      subIds.push(item[8]);
+    })
+
+    // There must be at least one row selected.
+    if (subIds.length == 0) {
+      $('#loading-icon').hide()
+      alert("Please select at least one row.");
+      return
+    }
+
+    let data = $(this).serializeArray();
+    data.push({ name: 'sub_ids', value: JSON.stringify(subIds) });
+
+    // Create a POST ajax call. Send the submissions ids and serialized form data.
+    $.ajax({
+      type: "POST",
+      url: this.action,
+      data: data,
+      success: function (response) {
+        // Begin downloading the generated zip file.
+        $('div.message-wrapper').show();
+        location.replace(response['url'])
+        $('#loading-icon').hide()
+      },
+      error: function (response) {
+        $('#loading-icon').hide()
+
+        // Get the error messages and append them to the appropriate form div.
+        let err_str = response.responseJSON['error']
+        let errors = JSON.parse(err_str)
+
+        if ('submission_field_options' in errors && !$('#submission-fields p.errorlist').length) {
+          let submissionFieldError = errors['submission_field_options'][0]['message']
+          let inputDiv = $('#submission-fields')
+          $("<p class='errorlist'>" + submissionFieldError + "</p>").appendTo(inputDiv);
+        } else if (!('submission_field_options' in errors) && ($('#submission-fields p.errorlist').length)) {
+          $('#submission-fields p.errorlist').remove()
+        }
+
+        if ('comment_field_options' in errors && !$('#comment-fields p.errorlist').length) {
+          let commentFieldError = errors['comment_field_options'][0]['message']
+          let inputDiv = $('#comment-fields')
+          $("<p class='errorlist'>" + commentFieldError + "</p>").appendTo(inputDiv);
+        } else if (!('comment_field_options' in errors) && ($('#comment-fields p.errorlist').length)) {
+          $('#comment-fields p.errorlist').remove()
+        }
+
+        if ('comment_limit' in errors && !$('#comment-limit p.errorlist').length) {
+          let commentLimitError = errors['comment_limit'][0]['message']
+          let inputDiv = $('#comment-limit')
+          $("<p class='errorlist'>" + commentLimitError + "</p>").appendTo(inputDiv);
+        } else if (!('comment_limit' in errors) && ($('#comment-limit p.errorlist').length)) {
+          $('#comment-limit p.errorlist').remove()
+        }
       }
     });
   });

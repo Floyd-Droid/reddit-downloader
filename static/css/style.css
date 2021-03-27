@@ -1,12 +1,16 @@
-#page-content-wrapper {
-  background-color:white;
+.page-content-wrapper {
+  background-color: rgb(250, 250, 250);
   min-width: 100vw;
   min-height: 100vh;
 }
 
-
 .navbar-brand {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+svg#download-icon {
+  color: #FF4500;
 }
 
 #navbar {
@@ -15,20 +19,11 @@
   border-bottom: 1px ridge gray;
 }
 
-a#welcome-msg {
-  font-size: 1.2em;
-  color: black;
-}
-
 .nav-item {
   color:black;
 }
 
-
-
-
-
-div.page-item-wrapper {
+div#search-form-wrapper {
   background-color: white;
   border: 1px ridge #14227b;
   border-radius: 5px;
@@ -36,8 +31,6 @@ div.page-item-wrapper {
   padding-bottom: 10px;
   width: 70vw;
 }
-
-
 
 div.login-wrapper {
   background-color: white;
@@ -60,45 +53,38 @@ div.login-wrapper {
 }
 
 .table-form-container {
+  background-color: white;
   border: 1px ridge #14227b;
   border-radius: 5px;
   margin: 5vh 5vw 10vh 5vw;
-
-}
-
-.table-section-header {
-  background-color: #14227b;
-  color: white;
-  padding: 10px 20px 10px 20px;
-  margin-bottom: 20px;
-  border-radius: 5px;
-  z-index: 5;
-  box-shadow: 0 5px 5px gray;
 }
 
 .table-container {
   border-bottom: 1px ridge #14227b;
-  margin: 0 5vw;
   padding-bottom: 5px;
+  overflow: auto;
 }
 
-.table-container .dt-buttons {
+.dt-buttons {
   margin-left: 5%;
 }
 
-div.opt-container {
-  padding: 20px;
-
+.table {
+  width: 100%; 
 }
 
-div#time_options { /* time options for search form */
+table.dataTable tbody tr td.select-checkbox {
+  top: 1.5em;
+  border: none;
+}
+
+input#id_url, input#id_terms, input#id_subreddit{
+  width: 80%;
+}
+
+div#time_options {
   border-top: 1px ridge #14227b;
   border-bottom: 1px ridge #14227b;
-}
-
-div.btn-container {
-  margin-top: 3em;
-  right:0;
 }
 
 button.btn {
@@ -126,20 +112,11 @@ div.message-wrapper {
   border-radius: 5px;
 }
 
+div#download-message-wrapper {
+  background-color: rgba(0, 255, 0, 0.3);
+  border: 3px ridge green;
+}
+
 .errorlist {
   color: red;
-}
-
-span.top {
-  display: block;
-  margin-top: 2vh;
-}
-
-
-@media (min-width: 768px) {
-
-  #page-content-wrapper {
-    min-width: 0;
-    width: 100%;
-  }
 }

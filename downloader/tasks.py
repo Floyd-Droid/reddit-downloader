@@ -282,6 +282,7 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
     return (results, nonexistent_subs, forbidden_subs)
 
 def get_submission_by_id(id_: str):
+    """Return a single submission using the submission's id, or None if the submission is unavailable."""
     try:
         sub = reddit.submission(id=id_)
         unlazify = sub.title
@@ -291,6 +292,7 @@ def get_submission_by_id(id_: str):
     return sub
 
 def get_submission_data_by_url(url: str) -> List[Dict]:
+    """Generate submission data from the submission's URL."""
     try:
         sub = reddit.submission(url=url)
         unlazify = sub.title

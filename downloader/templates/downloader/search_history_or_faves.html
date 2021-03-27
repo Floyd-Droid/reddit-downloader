@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load string_filters %}
 {% block title %}
   {% if type == 'favorites' %}
     Favorites
@@ -7,8 +8,8 @@
   {% endif %}
 {% endblock %}
 {% block content %}
-<div class="table-container mx-4 mt-4">
-  <div class="table-section-header">
+<div class="table-form-container px-3 pb-3">
+  <div class="section-header">
     {% if type == 'favorites' %}
     <h3>Favorites</h3>
     {% else %}
@@ -16,59 +17,67 @@
     {% endif %}
   </div>
   {% if queries %}
-  <table class="table table-sm table-striped table-bordered" id="history-table">
-    <p class="help-text">
-      Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
-    </p>
-    <thead class="thead-dark">
-      <tr>
-        <th></th>
-        <th>Query</th>
-        <th>Subreddit</th>
-        <th>Sort</th>
-        <th>Limit</th>
-        <th>Time Filter</th>
-        <th>Syntax</th>
-        <th>Date searched</th>
-        <th>options</th>
-        <th>id</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for query in queries %}
-      <tr>
-        <td class="align-middle"></td>
-        <td class="align-middle">{{query.terms}}</td>
-        <td class="align-middle">{{query.subreddit}}</td>
-        <td class="align-middle">{{query.sort}}</td>
-        <td class="align-middle">{{query.limit}}</td>
-        <td class="align-middle">{{query.time_filter}}</td>
-        <td class="align-middle">{{query.syntax}}</td>
-        <td class="align-middle">{{query.date_created}}</td>
-        <td class="align-middle">
-          <ul>
-            <form action="{% url 'downloader:search-main' %}" method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="redo" value="{{query.pk}}">
-              <button class="link-btn" type="submit">Search again</button>
-            </form>
-          </ul>
-          <ul>
-            <a href="{% url 'downloader:previous-search-main' pk=query.pk %}">Details</a>
-          </ul>
-        </td>
-        <td>{{query.pk}}</td>
-      </tr>
-      {% endfor %}
-  </table>
-  <div class="opt-container">
+  <p class="help-text">
+    Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
+  </p>
+  <div class="table-container">
+    <table class="table table-sm table-striped table-bordered">
+      <thead class="thead-dark">
+        <tr>
+          <th></th>
+          <th>Query</th>
+          <th>Subreddit(s)</th>
+          <th>Sort</th>
+          <th>Limit</th>
+          <th>Time Filter</th>
+          <th>Date searched</th>
+          <th>options</th>
+          <th>id</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for query in queries %}
+        <tr>
+          <td class="align-middle"></td>
+          <td class="align-middle">{{query.terms}}</td>
+          <td class="align-middle">{{query.subreddit|add_spaces}}</td>
+          <td class="align-middle">
+            {% if query.praw_sort %}
+            {{query.get_praw_sort_display}}
+            {% elif query.psaw_sort %}
+            {{query.get_psaw_sort_display}}
+            {% endif %}
+          </td>
+          <td class="align-middle">{{query.limit}}</td>
+          <td class="align-middle">{{query.time_filter}}</td>
+          <td class="align-middle">{{query.date_created}}</td>
+          <td class="align-middle">
+            <div>
+              <form action="{% url 'downloader:search-main' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="redo" value="{{query.pk}}">
+                <div>
+                  <button class="link-btn" type="submit">Search again</button>
+                </div>
+                <div>
+                  <a href="{% url 'downloader:previous-search-main' pk=query.pk %}">Details</a>
+                </div>
+              </form>
+            </div>
+          </td>
+          <td>{{query.pk}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+  </div>
+  <div class="pt-5 pb-3 d-flex justify-content-center">
     <form id="remove-queries-form" action="{% url 'downloader:remove-queries' %}" method="POST">
       {% csrf_token %}
       {% if type == 'favorites' %}
-      <input type="submit" class="rm-btn" name="remove-faves" value="Remove selected queries from favorites"></button>
+      <input type="submit" class="rm-btn btn btn-primary" name="remove-faves" value="Remove selected queries from favorites"></button>
       {% else %}
-      <input type="submit" class="rm-btn" name="remove-queries" value="Remove selected queries"></button>
-      <input type="submit" class="rm-btn" name="add-faves" value="Add selected queries to favorites"></button>
+      <input type="submit" class="rm-btn btn btn-primary" name="remove-queries" value="Remove selected queries"></button>
+      <input type="submit" class="rm-btn btn btn-primary" name="add-faves" value="Add selected queries to favorites"></button>
       {% endif %}
   </div>
   {% else %}

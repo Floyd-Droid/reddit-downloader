@@ -1,25 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}Search Results{% endblock %}
 {% block content %}
-{% if messages %}
-<div class="container message-wrapper">
-  <ul class="messages">
-    {% for message in messages %}
-    <li {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
-<div class="table-form-container">
-  <div class="table-container mx-4 mt-4">
-    <div class="table-section-header">
-      <h3>Search Results</h3>
-    </div>
-    {% if results %}
-    <table class="table table-sm table-striped table-bordered" id="sub-table">
-      <p class="help-text">
-        Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
-      </p>
+<div class="table-form-container px-3 pb-3">
+  <div class="section-header">
+    <h3>Search Results</h3>
+  </div>
+  {% if results %}
+  <p class="help-text">
+    Hold ctrl/cmd to select or deselect individual items. Hold shift to select or deselect a range of items.
+  </p>
+  <div class="table-container">
+    <table class="table table-sm table-striped table-bordered">
       <thead class="thead-dark">
         <tr>
           <th></th>
@@ -36,23 +27,71 @@
       <tbody>
         {% for sub in results %}
         <tr>
-          <td class="align-middle"></td>
-          <td class="align-middle">{{sub.title}}</td>
+          <td></td>
+          <td class="align-middle">{{sub.title|truncatechars:200}}</td>
           <td class="align-middle">{{sub.score}}</td>
           <td class="align-middle">{{sub.permalink|urlizetrunc:50}}</td>
           <td class="align-middle">{{sub.url|urlizetrunc:50}}</td>
           <td class="align-middle">{{sub.num_comments}}</td>
           <td class="align-middle">{{sub.date}}</td>
-          <td class="align-middle">{{sub.selftext}}</td>
+          <td class="align-middle">{{sub.selftext|truncatechars:200}}</td>
           <td>{{sub.id}}</td>
         </tr>
         {% endfor %}
     </table>
-    {% else %}
-    <div class="empty-msg">
-      <p class="empty-msg">No results match your query</p>
-    </div>
-    {% endif %}
   </div>
+  <div class="opt-container pt-4" id="download-options-container">
+    <div class="section-header">
+      <h3>Download Options</h3>
+    </div>
+    <div class="message-wrapper" id="download-message-wrapper" style="display:none;">
+      <span>Your download has begun</span>
+    </div>
+    <ul class="help-text">
+      <li>
+        Select 'submission' or 'comments' to get metadata, then select the desired corresponding fields. Select
+        'external' to get external files (images only).
+      </li>
+      <li>
+        Hold ctrl/cmd to select or deselect individual fields. Hold shift to select or deselect a range of fields.
+      </li>
+    </ul>
+    <form id="download-form" action="{% url 'downloader:generate-files' pk=query.pk %}">
+      {% csrf_token %}
+      <div class="d-flex flex-wrap justify-content-around mt-5">
+        <div class="mr-3">
+          <p>{{form.get_submission_data}} {{form.get_submission_data.label}}</p>
+          <p>{{form.get_comment_data}} {{form.get_comment_data.label}}</p>
+          <p>{{form.get_external_data}} {{form.get_external_data.label}}</p>
+        </div>
+        <div class="mx-3" id="submission-fields">
+          <p>{{form.submission_field_options.label}}</p>
+          <p>{{form.submission_field_options}}</p>
+        </div>
+        <div class="mx-3" id="comment-fields">
+          <p>{{form.comment_field_options.label}}</p>
+          <p>{{form.comment_field_options}}</p>
+        </div>
+        <div class="mx-3" id="comment-sort">
+          <p>{{form.comment_sort_option.label}}</p>
+          <p>{{form.comment_sort_option}}</p>
+        </div>
+        <div class="mx-3" id="comment-limit">
+          <p>{{form.comment_limit.label}}</p>
+          <p>{{form.comment_limit}}</p>
+          <p>{{form.comment_limit.help_text}}</p>
+        </div>
+      </div>
+      <div class="btn-container d-flex justify-content-center">
+        <button type="submit" class="btn btn-primary" id="download-btn">
+          <i class="fa fa-refresh fa-spin" id="loading-icon" style="display:none"></i> Download</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty-msg">
+    <p class="empty-msg">No results match your query</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

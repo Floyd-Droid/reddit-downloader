@@ -56,8 +56,8 @@ class SearchForm(forms.ModelForm):
             cleaned_data['time_filter'] = cleaned_data['praw_sort'] = cleaned_data['psaw_sort'] = ''
             cleaned_data['start_date'] = cleaned_data['end_date'] = None
             cleaned_data['limit'] = 1
-            if not cleaned_data.get('url'):
-                self.add_error('url', 'Please enter a valid URL')
+            # if not cleaned_data.get('url'):
+            #     self.add_error('url', 'Please enter a valid URL')
             return cleaned_data
         elif search_option == 'terms':
             cleaned_data['url'] = ''
@@ -159,3 +159,20 @@ class DownloadForm(forms.Form):
         required=False, 
         help_text="Leave empty to retrieve all comments."
     )
+
+    def clean(self):
+        cleaned_data = super(DownloadForm, self).clean()
+        # If the user checks the submission or comment box, they must also select at least one corresponding field.
+        if cleaned_data.get('get_submission_data') and not cleaned_data.get('submission_field_options'):
+            self.add_error('submission_field_options', 'Please select at least one field')
+
+        comment_selected = cleaned_data.get('get_comment_data')
+        limit = cleaned_data.get('comment_limit')
+        if comment_selected:
+            if not cleaned_data.get('comment_field_options'):
+                self.add_error('comment_field_options', 'Please select at least one field')
+            if limit is not None and limit < 1:
+                self.add_error('comment_limit', 'Please choose a number greater than 0')
+        else:
+            cleaned_data['comment_field_options'] = ''
+            cleaned_data['comment_limit'] = None

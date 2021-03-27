@@ -16,7 +16,8 @@ import time
 import wget
 
 
-def download_results(query: SearchQuery, form_data: Dict[str, list], sub_ids: List[str]):
+def download_results(query: SearchQuery, form_data: Dict[str, list], sub_ids: List[str]) -> str:
+    """Begin generating files at the temporary path."""
     letters = string.ascii_lowercase
     tmp_dirname = ''.join(random.choice(letters) for i in range(10))
     tmp_path = os.path.join(settings.MEDIA_ROOT, tmp_dirname)
@@ -37,7 +38,7 @@ def download_results(query: SearchQuery, form_data: Dict[str, list], sub_ids: Li
     return tmp_dirname
 
 def generate_submissions_file(query: SearchQuery, ids: List[str], field_opts: List[str], tmp_path: str):
-
+    """Gather submission metadata and place into a json file."""
     sort = query.praw_sort if query.praw_sort else query.psaw_sort
     json_data = {
         "search_query": {
@@ -53,50 +54,53 @@ def generate_submissions_file(query: SearchQuery, ids: List[str], field_opts: Li
     }
     for id_ in ids:
         sub = get_submission_by_id(id_)
+        if sub:
 
-        # Request submission data to get non-lazy submission.
-        # This is necessary to access all submission fields.
-        unlazify = sub.title
+            # Request submission data to get non-lazy submission.
+            # This is necessary to access all submission fields.
+            unlazify = sub.title
 
-        all_fields = vars(sub)
-        sub_info = {field:all_fields[field] for field in field_opts}
-        
-        # Convert UTC to date, complete the permalink, and replace deleted authors.
-        if sub_info.get('created_utc', None):
-            sub_info['created_utc'] = str(datetime.datetime.fromtimestamp(sub_info.get('created_utc')))
-        if sub_info.get('permalink', None):
-            sub_info['permalink'] = 'https://www.reddit.com' + sub_info.get('permalink')
-        if sub_info.get('author', 'not found') is None:
-            sub_info['author'] = '[Deleted]'
+            all_fields = vars(sub)
+            sub_info = {field:all_fields[field] for field in field_opts}
+            
+            # Convert UTC to date, complete the permalink, and replace deleted authors.
+            if sub_info.get('created_utc', None):
+                sub_info['created_utc'] = str(datetime.datetime.fromtimestamp(sub_info.get('created_utc')))
+            if sub_info.get('permalink', None):
+                sub_info['permalink'] = 'https://www.reddit.com' + sub_info.get('permalink')
+            if sub_info.get('author', 'not found') is None:
+                sub_info['author'] = '[Deleted]'
 
-        json_data["submissions"].append(sub_info)
+            json_data["submissions"].append(sub_info)
     
     fullpath = get_submissions_path(query, tmp_path)
     write_json(fullpath, json_data)
 
 def generate_comments_files(ids: List[str], field_opts: List[str], sort: str, limit: Optional[int], tmp_path: str):
+    """Gather comment metadata and place into a json file."""
     for id_ in ids:
         sub = get_submission_by_id(id_)
-        sub.comment_sort = sort
+        if sub:
+            sub.comment_sort = sort
 
-        # Set up initial data with basic submission info
-        json_data = {
-            "submission": {
-                "title": sub.title,
-                "subreddit": sub.subreddit,
-                "permalink": 'https://www.reddit.com' + sub.permalink,
-                "url": sub.url,
-                "comment_sort": sort
+            # Set up initial data with basic submission info
+            json_data = {
+                "submission": {
+                    "title": sub.title,
+                    "subreddit": sub.subreddit,
+                    "permalink": 'https://www.reddit.com' + sub.permalink,
+                    "url": sub.url,
+                    "comment_sort": sort
+                }
             }
-        }
-        fullpath = get_comments_path(sub.title, limit, tmp_path)
+            fullpath = get_comments_path(sub.title, limit, tmp_path)
 
-        # If the user did not give a limit, get as many comments as possible
-        gen_limit = limit if limit else 100000
+            # If the user did not give a limit, get as many comments as possible
+            gen_limit = limit if limit else 100000
 
-        comment_dict = get_comments(sub.comments, field_opts, gen_limit, id_)
-        json_data["comments"] = [comment_dict]
-        write_json(fullpath, json_data)
+            comment_dict = get_comments(sub.comments, field_opts, gen_limit, id_)
+            json_data["comments"] = [comment_dict]
+            write_json(fullpath, json_data)
 
 def replace_more_comments(comments: CommentForest):
     """Replace PRAW's MoreComments objects with a list of comments as they are encountered."""
@@ -108,7 +112,6 @@ def replace_more_comments(comments: CommentForest):
 
 def get_comments(comments: CommentForest, field_opts: List[str], limit: int, sub_id: str) -> Dict[str, dict]:
     """Get all comments/replies and format in a hierarchy."""
-
     count = 0
     all_comments_dict = {}
     comment_queue = queue.Queue()
@@ -151,22 +154,22 @@ def get_comments(comments: CommentForest, field_opts: List[str], limit: int, sub
     return all_comments_dict
 
 def get_external_files(ids: List[str], tmp_path: str):
-    """Download external data (images)."""
+    """Download external data (images only)."""
     for id_ in ids:
         sub = get_submission_by_id(id_)
         if not sub:
             continue
 
         ext_url = sub.url
+        fullpath = get_external_path(ext_url, tmp_path)
         if ext_url.endswith(('png', 'jpg', 'jpeg', 'gif')):
-            fullpath = get_external_path(ext_url, tmp_path)
             try:
                 wget.download(ext_url, fullpath)
             except:
                 continue
 
 def get_submissions_path(query: SearchQuery, tmp_path: str) -> str:
-    """Construct a file name from the SearchQuery object."""
+    """Construct a file name from the SearchQuery object and return a full path."""
     sort = query.praw_sort if query.praw_sort else query.psaw_sort
     if query.terms:
         term = "search-'"+ query.terms + "'"
@@ -188,6 +191,7 @@ def get_submissions_path(query: SearchQuery, tmp_path: str) -> str:
     return fullpath
 
 def get_comments_path(title: str, limit: Optional[int], tmp_path: str) -> str:
+    """Construct a filename from submission data and return a full path."""
     dir_path = os.path.join(tmp_path, 'comments')
     os.makedirs(dir_path, exist_ok=True)
     filename = title[:40]
@@ -201,6 +205,7 @@ def get_comments_path(title: str, limit: Optional[int], tmp_path: str) -> str:
     return fullpath
 
 def get_external_path(external_url: str, tmp_path: str) -> str:
+    """Construct a filename from the URL and return a full path."""
     filename = external_url.split('/')[-1]
     filename = remove_illegal_chars(filename)
     dirpath = os.path.join(tmp_path, 'images')

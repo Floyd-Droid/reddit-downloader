@@ -191,7 +191,6 @@ class GenerateFilesView(FormView):
             if form.is_valid():
                 sub_str = request.POST.get('sub_ids')
                 sub_ids = json.loads(sub_str)
-
                 tmp_dirname = download_results(query, form.cleaned_data, sub_ids)
 
                 # Return the url that generates/downloads the files in the response
@@ -224,3 +223,10 @@ class DownloadView(View):
         shutil.rmtree(tmp_path)
 
         return response
+
+
+class LogoutView(View):
+
+    def get(self, request, *args, **kwargs):
+        request.session.clear()
+        return redirect(reverse('downloader:login'))

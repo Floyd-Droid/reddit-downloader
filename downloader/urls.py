@@ -12,7 +12,8 @@ from .views import (
     PreviousSearchView,
     RemoveQueriesView,
     GenerateFilesView,
-    DownloadView
+    DownloadView,
+    LogoutView
 )
 
 app_name = 'downloader'
@@ -29,4 +30,5 @@ urlpatterns = [
 
     path('generate/<int:pk>', GenerateFilesView.as_view(), name='generate-files'),
     path('download/<str:tmp>', DownloadView.as_view(), name='download'),
+    path('logout/', LogoutView.as_view(), name='logout')
 ]

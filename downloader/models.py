@@ -38,7 +38,7 @@ class SearchQuery(models.Model):
         ('plain', 'Plain')
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
     url = models.URLField(max_length=250, blank=True)
     terms = models.CharField(
         max_length=512, 

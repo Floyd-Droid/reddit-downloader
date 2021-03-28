@@ -56,8 +56,8 @@ class SearchForm(forms.ModelForm):
             cleaned_data['time_filter'] = cleaned_data['praw_sort'] = cleaned_data['psaw_sort'] = ''
             cleaned_data['start_date'] = cleaned_data['end_date'] = None
             cleaned_data['limit'] = 1
-            # if not cleaned_data.get('url'):
-            #     self.add_error('url', 'Please enter a valid URL')
+            if not cleaned_data.get('url'):
+                self.add_error('url', 'Please enter a valid URL')
             return cleaned_data
         elif search_option == 'terms':
             cleaned_data['url'] = ''

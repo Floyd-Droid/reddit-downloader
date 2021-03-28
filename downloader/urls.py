@@ -29,6 +29,6 @@ urlpatterns = [
     path('search/history/remove/', RemoveQueriesView.as_view(), name='remove-queries'),
 
     path('generate/<int:pk>', GenerateFilesView.as_view(), name='generate-files'),
-    path('download/<str:tmp>', DownloadView.as_view(), name='download'),
+    path('download/<int:pk>/<str:tmp>', DownloadView.as_view(), name='download'),
     path('logout/', LogoutView.as_view(), name='logout')
 ]

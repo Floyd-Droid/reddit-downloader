@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -53,7 +54,11 @@ class SearchView(View):
     form_class = SearchForm
 
     def get(self, request, *args, **kwargs):
-        context = {'form': self.form_class}
+        auth = request.session.get('authenticated', False)
+        context = {
+            'form': self.form_class,
+            'authenticated': auth
+            }
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
@@ -68,9 +73,10 @@ class SearchView(View):
             form = self.form_class(data=request.POST)
             if form.is_valid():
                 query = form.save(commit=False)
-                # Add user to search query object
-                username = self.request.session["current_user"]
-                query.user = User.objects.get(username=username)
+                if request.session.get('authenticated', False) is True:
+                    # Add user to search query object
+                    username = self.request.session["current_user"]
+                    query.user = User.objects.get(username=username)
                 query.save()
             else:
                 context = {'form': form}
@@ -104,10 +110,12 @@ class SearchResultsView(View):
                 subs_str = ', '.join(forbidden_subreddits)
                 messages.info(request, f"The following subreddits are forbidden: {subs_str}.")
 
+        auth = request.session.get('authenticated', False)
         context = {
             'query': query,
             'results': results,
-            'form': self.download_form
+            'form': self.download_form,
+            'authenticated': auth
         }
         return render(request, self.template_name, context)
 
@@ -123,14 +131,19 @@ class PreviousSearchView(FormView):
     def get(self, request, *args, **kwargs):
         q = self.get_object()
         form = SearchForm(instance=q)
+        auth = request.session.get('authenticated', False)
         context = {
-            'form': form
+            'form': form,
+            'authenticated': auth
         }
         return render(request, self.template_name, context)
 
 
-class SearchHistoryView(DetailView):
+class SearchHistoryView(UserPassesTestMixin, DetailView):
     template_name = 'downloader/search_history_or_faves.html'
+
+    def test_func(self):
+        return self.request.session.get('authenticated', False)
 
     def get(self, request, *args, **kwargs):
         username = request.session["current_user"]
@@ -141,14 +154,19 @@ class SearchHistoryView(DetailView):
         else:
             queries = SearchQuery.objects.filter(user=username, favorite=True).order_by('-date_created')
 
+        auth = request.session.get('authenticated', False)
         context = {
             'queries': queries,
-            'type': type_
+            'type': type_,
+            'authenticated': auth
         }
         return render(request, self.template_name, context)
 
 
-class RemoveQueriesView(View):
+class RemoveQueriesView(UserPassesTestMixin, View):
+
+    def test_func(self):
+        return self.request.session.get('authenticated', False)
 
     def post(self, request, *args, **kwargs):
         if request.is_ajax:
@@ -194,7 +212,7 @@ class GenerateFilesView(FormView):
                 tmp_dirname = download_results(query, form.cleaned_data, sub_ids)
 
                 # Return the url that generates/downloads the files in the response
-                url = reverse('downloader:download', kwargs={'tmp':tmp_dirname})
+                url = reverse('downloader:download', kwargs={'pk': query.pk, 'tmp':tmp_dirname})
                 return JsonResponse({'url': url}, status=200)
             else:
                 return JsonResponse({'error': form.errors.as_json()}, status=400)
@@ -203,6 +221,10 @@ class GenerateFilesView(FormView):
 
 
 class DownloadView(View):
+
+    def get_object(self, *args, **kwargs):
+        id_ = self.kwargs.get('pk')
+        return get_object_or_404(SearchQuery, pk=id_)
 
     def get(self, request, *args, **kwargs):
         dirname = self.kwargs.get('tmp')
@@ -222,6 +244,10 @@ class DownloadView(View):
         # Delete the generated files
         shutil.rmtree(tmp_path)
 
+        # If the user is anonymous, delete the searchquery from the database.
+        if request.session.get('authenticated', None) is None:
+            self.get_object().delete()
+        print(request.session.items())
         return response
 
 

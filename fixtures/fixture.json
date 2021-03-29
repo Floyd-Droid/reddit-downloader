@@ -1,0 +1,297 @@
+[
+{
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$216000$dLF9xqqdk3GF$+y0ykhmhQVroDZYYRxvc6SQsTTR+I9Hs1mZZT1iIjjM=",
+        "last_login": "2021-02-18T14:22:32.965Z",
+        "is_superuser": true,
+        "username": "jourdy",
+        "first_name": "",
+        "last_name": "",
+        "email": "jourdonfloyd@gmail.com",
+        "is_staff": true,
+        "is_active": true,
+        "date_joined": "2021-02-18T14:09:41.147Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 1,
+    "fields": {
+        "app_label": "admin",
+        "model": "logentry"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 2,
+    "fields": {
+        "app_label": "auth",
+        "model": "permission"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 3,
+    "fields": {
+        "app_label": "auth",
+        "model": "group"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 4,
+    "fields": {
+        "app_label": "auth",
+        "model": "user"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 5,
+    "fields": {
+        "app_label": "contenttypes",
+        "model": "contenttype"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 6,
+    "fields": {
+        "app_label": "sessions",
+        "model": "session"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 7,
+    "fields": {
+        "app_label": "downloader",
+        "model": "searchquery"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 8,
+    "fields": {
+        "app_label": "downloader",
+        "model": "submission"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 9,
+    "fields": {
+        "app_label": "downloader",
+        "model": "user"
+    }
+},
+{
+    "model": "contenttypes.contenttype",
+    "pk": 10,
+    "fields": {
+        "app_label": "downloader",
+        "model": "comment"
+    }
+},
+{
+    "model": "downloader.user",
+    "pk": "redd_spider",
+    "fields": {
+        "last_clear_datetime": "2021-02-01T00:03:29.341Z"
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 1,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "movie",
+        "subreddit": "AskReddit",
+        "syntax": "lucene",
+        "praw_sort": "relevance",
+        "limit": 5,
+        "time_filter": "all",
+        "start_date": null,
+        "end_date": null,
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-24T14:19:29.075Z",
+        "favorite": true
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 2,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "movie",
+        "subreddit": "AskReddit",
+        "syntax": "lucene",
+        "praw_sort": "relevance",
+        "limit": 5,
+        "time_filter": "all",
+        "start_date": null,
+        "end_date": null,
+        "psaw_sort": "",
+        "date_created": "2021-02-24T14:19:29.075Z",
+        "favorite": true
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 3,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "movie",
+        "subreddit": "AskReddit",
+        "syntax": "lucene",
+        "praw_sort": "relevance",
+        "limit": 5,
+        "time_filter": "all",
+        "start_date": null,
+        "end_date": null,
+        "psaw_sort": "",
+        "date_created": "2021-02-24T14:19:29.075Z",
+        "favorite": true
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 4,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "test1",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "relevance",
+        "limit": 25,
+        "time_filter": "all",
+        "start_date": null,
+        "end_date": null,
+        "psaw_sort": "",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 5,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "test2",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "relevance",
+        "limit": 25,
+        "time_filter": "all",
+        "start_date": null,
+        "end_date": null,
+        "psaw_sort": "",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 6,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "test3",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "",
+        "limit": 25,
+        "time_filter": "",
+        "start_date": "2021-02-01",
+        "end_date": "2021-02-02",
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 7,
+    "fields": {
+        "user": "redd_spider",
+        "url": "",
+        "terms": "test3",
+        "subreddit": "askreddit,notreal1,notreal2",
+        "syntax": "lucene",
+        "praw_sort": "",
+        "limit": 25,
+        "time_filter": "",
+        "start_date": "2021-02-01",
+        "end_date": "2021-02-02",
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 8,
+    "fields": {
+        "user": null,
+        "url": "",
+        "terms": "test3",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "",
+        "limit": 25,
+        "time_filter": "",
+        "start_date": "2021-02-01",
+        "end_date": "2021-02-02",
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 9,
+    "fields": {
+        "user": null,
+        "url": "",
+        "terms": "test3",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "",
+        "limit": 25,
+        "time_filter": "",
+        "start_date": "2021-02-01",
+        "end_date": "2021-02-02",
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+},
+{
+    "model": "downloader.searchquery",
+    "pk": 10,
+    "fields": {
+        "user": null,
+        "url": "",
+        "terms": "test3",
+        "subreddit": "askreddit",
+        "syntax": "lucene",
+        "praw_sort": "",
+        "limit": 25,
+        "time_filter": "",
+        "start_date": "2021-02-01",
+        "end_date": "2021-02-02",
+        "psaw_sort": "created_utc",
+        "date_created": "2021-02-27T14:19:29.075Z",
+        "favorite": false
+    }
+}
+]

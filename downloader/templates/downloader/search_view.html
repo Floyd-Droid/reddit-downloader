@@ -12,14 +12,14 @@
       <p>Please enter a URL below, or provide search criteria. Note that search terms are not always required.</p>
       <div class="row mt-5">
         <div class="col">
-          <input type="radio" name="search_option" value="url" required checked>
+          {{form.url_select}}
           {{form.url.label}} {{form.url}}
           <p>{{form.url.errors}}</p>
         </div>
       </div>
       <div class="row mt-5">
         <div class="col">
-          <input type="radio" name="search_option" value="terms" required>
+          {{form.terms_select}}
           {{form.terms.label}} {{form.terms}}
           <p>{{form.terms.errors}}</p>
         </div>
@@ -43,8 +43,8 @@
       </div>
       <div class="py-5" id="time_options">
         <div class="row">
-          <div class="col-auto form-check">
-            <input class="form-check-input ml-1" type="radio" name="time_option" value="time_filter" required checked>
+          <div class="col-auto">
+            {{form.time_filter_select}}
           </div>
           <div class="col">
             {{form.time_filter.label}} {{form.time_filter}}
@@ -59,8 +59,8 @@
           </div>
         </div>
         <div class="row mt-5">
-          <div class="col-auto form-check">
-            <input class="form-check-input ml-1" type="radio" name="time_option" value="date_range" required>
+          <div class="col-auto">
+            {{form.date_range_select}}
           </div>
           <div class="col">
             <p>{{form.start_date.label}} {{form.start_date.help_text}}</p>

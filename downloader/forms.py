@@ -1,5 +1,4 @@
 from django import forms
-
 from .models import (
     SearchQuery,
 )
@@ -12,15 +11,28 @@ class SearchForm(forms.ModelForm):
             'date_searched',
             'user'
         )
+    
+    url_select = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'option-select'}))
+    terms_select = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'option-select'}))
+    time_filter_select = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'option-select'}))
+    date_range_select = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'option-select'}))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, edit=None, *args, **kwargs):
         super(SearchForm, self).__init__(*args, **kwargs)
         self.fields['start_date'].input_formats = ['%Y-%m-%d', '%Y-%m-%d %H:%M:%S']
         self.fields['end_date'].input_formats = ['%Y-%m-%d', '%Y-%m-%d %H:%M:%S']
         self.fields['url'].label = 'URL'
         self.fields['terms'].label = 'Search terms'
         self.fields['subreddit'].label = 'Subreddit(s)'
-        self.data = kwargs.get('data')
+        instance = kwargs.get('instance', None)
+        if instance:
+            if not instance.url:
+                self.fields['url_select'].initial = False
+                self.fields['terms_select'].initial = True
+            if not instance.time_filter:
+                self.fields['time_filter_select'].initial = False
+                self.fields['date_range_select'].initial = True
+        
 
     def clean_subreddit(self):
         """Format the subreddit string: lowercase and remove whitespace."""
@@ -35,23 +47,32 @@ class SearchForm(forms.ModelForm):
     
     def clean_limit(self):
         cleaned_data = super(SearchForm, self).clean()
+        time_filter_selected = cleaned_data.get('time_filter_select')
+        date_range_selected = cleaned_data.get('date_range_select')
+
         lim = cleaned_data.get("limit")
-        time_option = self.data.get("time_option")
-        if time_option == 'time_filter' and lim > 500:
+        if time_filter_selected and lim > 500:
             self.add_error('limit', 'To use the standard Reddit time filter, the limit must be no greater than 500')
-        elif time_option == 'date_range' and lim > 5000:
-            self.add_error('limit', 'Please limit to no more than 3,000 results')
+        elif date_range_selected and lim > 5000:
+            self.add_error('limit', 'Please limit to no more than 5,000 results')
         return lim
 
     def clean(self):
         cleaned_data = super(SearchForm, self).clean()
-        search_option = self.data.get('search_option')
+        url_selected = cleaned_data.get('url_select')
+        terms_selected = cleaned_data.get('terms_select')
+        time_filter_selected = cleaned_data.get('time_filter_select')
+        date_range_selected = cleaned_data.get('date_range_select')
         praw_sort = cleaned_data.get('praw_sort')
         subreddit_str = cleaned_data.get('subreddit')
         subreddit_list = subreddit_str.split(',')
 
+        # One search type must be selected
+        if (url_selected and terms_selected) or (not url_selected and not terms_selected):
+            self.add_error('url', 'Please select either the url choice or the other criteria')
+
         # Clear all search criteria if the user gives a URL.
-        if search_option == 'url':
+        if url_selected:
             cleaned_data['terms'] = cleaned_data['subreddit'] = ''
             cleaned_data['time_filter'] = cleaned_data['praw_sort'] = cleaned_data['psaw_sort'] = ''
             cleaned_data['start_date'] = cleaned_data['end_date'] = None
@@ -59,10 +80,15 @@ class SearchForm(forms.ModelForm):
             if not cleaned_data.get('url'):
                 self.add_error('url', 'Please enter a valid URL')
             return cleaned_data
-        elif search_option == 'terms':
+        elif terms_selected:
             cleaned_data['url'] = ''
 
-        if self.data.get("time_option") == 'time_filter':
+        # One time option must be selected if not getting a submission by url
+        if not url_selected:
+            if (time_filter_selected and date_range_selected) or (not time_filter_selected and not date_range_selected):
+                self.add_error('time_filter', 'Please select either the time filter choice or the date range choice')
+
+        if time_filter_selected:
             # Date range options are excluded
             cleaned_data['start_date'] = cleaned_data['end_date'] = None
             cleaned_data['psaw_sort'] = ''
@@ -82,7 +108,7 @@ class SearchForm(forms.ModelForm):
             if praw_sort in ['relevance', 'comments'] and not cleaned_data['terms']:
                 self.add_error('terms', 'Search terms are required for the selected sort option')
 
-        elif self.data.get("time_option") == 'date_range':
+        elif date_range_selected:
             cleaned_data['time_filter'] = cleaned_data['praw_sort'] = ''
 
             if cleaned_data.get('start_date') is None:

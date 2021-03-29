@@ -45,7 +45,19 @@ $(document).ready(function () {
     }
   });
 
-  $('#remove-queries-form').submit(function (e) {
+  $(".option-select").click(function () {
+    if ($(this).attr("id") == "id_url_select") {
+      $("#id_terms_select").prop("checked", false)
+    } else if ($(this).attr("id") == "id_terms_select") {
+      $("#id_url_select").prop("checked", false)
+    } else if ($(this).attr("id") == "id_time_filter_select") {
+      $("#id_date_range_select").prop("checked", false)
+    } else if ($(this).attr("id") == "id_date_range_select") {
+      $("#id_time_filter_select").prop("checked", false)
+    }
+  });
+
+  $("#remove-queries-form").submit(function (e) {
     e.preventDefault();
   })
  

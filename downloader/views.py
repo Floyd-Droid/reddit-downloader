@@ -24,9 +24,6 @@ from .models import (
 from .tasks import (
     AUTH_URL,
     get_results,
-    get_submission_data,
-    get_praw_submissions,
-    get_psaw_submissions,
     get_submission_data_by_url,
 )
 import json
@@ -130,7 +127,7 @@ class PreviousSearchView(FormView):
 
     def get(self, request, *args, **kwargs):
         q = self.get_object()
-        form = SearchForm(instance=q)
+        form = SearchForm(instance=q, edit=True)
         auth = request.session.get('authenticated', False)
         context = {
             'form': form,
@@ -244,10 +241,6 @@ class DownloadView(View):
         # Delete the generated files
         shutil.rmtree(tmp_path)
 
-        # If the user is anonymous, delete the searchquery from the database.
-        if request.session.get('authenticated', None) is None:
-            self.get_object().delete()
-        print(request.session.items())
         return response
 
 

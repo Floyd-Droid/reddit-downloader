@@ -9,7 +9,7 @@ from django.views.generic import (
     FormView,
     DetailView
 )
-from jf_reddit.settings import development as settings
+from reddit_downloader.settings import production as settings
 from .export import (
     download_results
 )

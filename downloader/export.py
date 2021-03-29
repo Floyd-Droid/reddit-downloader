@@ -1,6 +1,6 @@
 from .models import SearchQuery
 from .tasks import get_submission_by_id
-from jf_reddit.settings import development as settings
+from reddit_downloader.settings import production as settings
 from praw.models import MoreComments
 from praw.models.comment_forest import CommentForest
 from typing import List, Dict, Optional
@@ -12,7 +12,6 @@ import praw
 import queue
 import random
 import string
-import time
 import wget
 
 

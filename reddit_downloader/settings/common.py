@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'jf_reddit.urls'
+ROOT_URLCONF = 'reddit_downloader.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'jf_reddit.wsgi.application'
+WSGI_APPLICATION = 'reddit_downloader.wsgi.application'
 
 
 # Password validation
@@ -94,7 +94,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'EST'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -113,8 +113,8 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
 
-# FIXTURE_DIRS = [
-#     os.path.join(BASE_DIR, 'fixtures'),
-# ]
+FIXTURE_DIRS = [
+    os.path.join(BASE_DIR, 'fixtures'),
+]
 
 LOGOUT_REDIRECT_URL = 'login'

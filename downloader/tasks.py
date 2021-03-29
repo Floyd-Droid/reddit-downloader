@@ -32,7 +32,7 @@ reddit = praw.Reddit(
     client_id=env.str('CLIENT_ID'),
     client_secret=env.str('CLIENT_SECRET'),
     user_agent='jf_downloader',
-    redirect_uri='http://localhost:8000/authorize'
+    redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize'
 )
 
 scopes = ['identity', 'mysubreddits', 'read']

@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .tasks import(
+    begin_auth,
     authorize,
 )
 
@@ -19,6 +20,7 @@ from .views import (
 app_name = 'downloader'
 
 urlpatterns = [
+    path('begin-authorization/', begin_auth, name='begin-authorization'),
     path('authorize/', authorize, name='authorize'),
     path('', LoginView.as_view(), name='login'),
 

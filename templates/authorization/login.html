@@ -33,7 +33,7 @@
         </h3>
       </div>
       <div class="container">
-        <p>Please <a href="{{auth_url}}">log in with Reddit</a> to continue.</p>
+        <p><a href="{% url 'downloader:begin-authorization' %}">Click here</a> to log in through Reddit</p>
         <p>Or <a href="{% url 'downloader:search-main' %}">continue to search</a> without logging in.</p>
       </div>
     </div>

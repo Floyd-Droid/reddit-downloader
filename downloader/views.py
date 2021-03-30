@@ -22,7 +22,6 @@ from .models import (
     SearchQuery,
 )
 from .tasks import (
-    AUTH_URL,
     get_results,
     get_submission_data_by_url,
 )
@@ -39,10 +38,7 @@ class LoginView(View):
         if request.session.get('authenticated', False):
             return redirect(reverse('downloader:search-main'))
         else:
-            context = {
-                "auth_url": AUTH_URL
-            }
-            return render(request, self.template_name, context)
+            return render(request, self.template_name, {})
 
 
 class SearchView(View):

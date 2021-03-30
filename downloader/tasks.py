@@ -32,14 +32,17 @@ reddit = praw.Reddit(
     client_id=env.str('CLIENT_ID'),
     client_secret=env.str('CLIENT_SECRET'),
     user_agent='jf_downloader',
-    redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize'
+    redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize/'
 )
 
-scopes = ['identity', 'mysubreddits', 'read']
-state = str(uuid.uuid4())
-AUTH_URL = reddit.auth.url(scopes, state, "permanent")
-
 api = PushshiftAPI(reddit)
+
+def begin_auth(request):
+    scopes = ['identity', 'mysubreddits', 'read']
+    request.session['state'] = str(uuid.uuid4())
+    AUTH_URL = reddit.auth.url(scopes, request.session.get('state'), "permanent")
+
+    return redirect(AUTH_URL)
 
 def authorize(request):
     """
@@ -50,7 +53,7 @@ def authorize(request):
     auth_code = request.GET.get('code', None)
     error = request.GET.get('error', None)
 
-    if returned_state != state:
+    if returned_state != request.session.get('state', None):
         return HttpResponseBadRequest('State codes do not match')
 
     if error:

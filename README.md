@@ -1,6 +1,6 @@
 # Downloader for Reddit
 [![Made with Django](https://img.shields.io/badge/made%20with-Django-orange)](https://pypi.org/project/Django)
-[![Build Status](https://travis-ci.com/Floyd-Droid/jf-reddit-downloader.svg?branch=master)](https://travis-ci.com/Floyd-Droid/jf-reddit-downloader)
+[![Build Status](https://travis-ci.com/Floyd-Droid/reddit-downloader.svg?branch=master)](https://travis-ci.com/Floyd-Droid/reddit-downloader)
 ![Python](https://img.shields.io/badge/python-3.9-blue.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE.md)
 
@@ -8,8 +8,11 @@ This application gathers and downloads Reddit submission data, with or without a
 
 Simply log in with your Reddit account (or skip directly to the search form), then enter search criteria into the form. 
 Once the desired submissions are selected, you can determine what kind of data to download:
+
 (1) Submission metadata (as JSON)
+
 (2) Comment metadata (as JSON)
+
 (3) External data. Currently, this only includes image files of type jpg, png, or gif. All other types are ignored.
 
 The files are generated on the server, placed into a zip file, and delivered to the user for download.
@@ -25,13 +28,13 @@ If authenticated through Reddit, a search history is kept. In addition, any sear
 * JavaScript
 * Bootstrap 4
 * Django web framework 3.1.6
-* PostgreSQL 12.4 (hosted by Heroku)
+* PostgreSQL 13.2 (hosted by Heroku)
 
 # Installation
 
 Clone the repo and create a virtual environment within the project directory.
 ```bash
-git clone https://github.com/Floyd-Droid/jf-issue-tracker.git
+git clone https://github.com/Floyd-Droid/reddit-downloader.git
 pip3 -m venv myenv
 ```
 

@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.9"
+install:
+  - pip install -r requirements.txt
+env:
+  global:
+    - SECRET_KEY="travis"
+    - secure: "U1U9qPJe4xnQ+klBBjIwxNqXg3xLBmE/XY/QeFzEnNkHjbI8kdD+Ljy8+c8cibQ1NdWsWrIJfBL9f5s9ZNTTHHKte4TfvcHBwQQYKTbQ06we8maJ/iT+axERJ8E9P0UaUoiYDAo1AYMwsPGtgTgyYECOKZc96bQiKzN7q6deh2n667ZyIqqTXUaELpR+AWbsjH3wzhMsqmR1J4lQIToiQM878wywtacLLRTx9B9liJgTJux5FwP0syXvBKPdRKKJ5QFUjYf9KR7oCw3QlnUViZPfC1ig6F5U3p6ui/2lgyvGxy8jb/nrWj2J07dOu2VEmBeslEXIZDKVmSmiDf9QxbPzoPcU0EGpecW6Gh5x+9lAKLfcJow19rmsbuWiAeLI/PXexa2IQi7PCHgM8g30jPfBfRiLsFjl4IpbOJLA7mfeiQ0tgu5mbO/50L4S1HQhA9odjpD3wgLJnSU167/fpjb5aYF+GK8ati9+aHkk3KnwHZka42AoiUDm4mYW/n7mdbzrmnE/6M56tpLx8hPx4K2MjOzbnE/2QiuV2XKImYwtYobIj/FXX2Wx7AB0V957SoESsP/neBsCD0tYKdGXjGbd+LJrnzIMkSr/EuUFuLsHuki8RniPg0LDOElEIrK7BFw+YpH5HH8i2x3LexAhK7riFzlVUu1hr69sQR0YJ4M="
+    - secure: "Ca5ZKwpNFikpVwyKN++stuZMa//GsoO0aRXID0qZg/Ei8ClVPs81qNFW0IMbP3U9H4kD/OGZ/4bvVztfjg1AFvErWZhdDaPjfaIkQYC6AkBXhHdLAWc7OmXsHghA/+mwfn31HHYc/BUOh1Lzklvxcv/ZterE0UMcIAOb8cf9yiuYfszmpHx5Phvw7I0aCkJQq9+E9lP1qw9Ne3WnT18950hfO/PklENG68kO0zGU5FJhna6V/uL/SApOS/j64X9AWgCaH26EuiaayX7IOacL01xfo8/+GWDwMfgXISGAQKYxP2UpXCIJQz7QihkDcIuh3PKrMuzjjVdGM3XFlaWgx/tf7hLFky0iPP3jF7C+b4NN40XEy4bq7+NxXgB/uwojPwL24CqjRwJQ8ZvKRA6Ig7h/ThwtOnTYkJfQhIaHN34ghnFANjtbhSEF5m5Vv2lJ0Z+td+pd7JYWES9cGZ0Q4Sn0pseYb53BEBOwEQj+kLky0AenMhFYT2h4frq1HZM/L+WGG6OkYAPsDVg2pa0i4CkS7vQnLDsyZhrgRP2BMnei167QJ2/FBXdPT4UwM5UxuqLamV2N5VlTYgnr3ySF3wIN6APtOVRGU+vMMfrA/BLz5zNOQArmAu/p0IZlAP2CMdWgKYFrWJy7l1HN+6yiKH05MJMItyG5qb+munii6Pk="
+script:
+  - python manage.py collectstatic --noinput
+  - ./manage.py test

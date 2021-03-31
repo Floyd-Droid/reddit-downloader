@@ -25,8 +25,8 @@ class TestQuery(TestCase):
 
         response2 = self.client.post(
             reverse('downloader:search-main'), 
-            data={'url': '', 'terms': 'cat', 'subreddit': 'pics', 'syntax': 'lucene', 'limit': 10,
-                'praw_sort': 'new', 'time_filter': 'all', 'start_date': '', 
+            data={'terms_select': True, 'url': '', 'terms': 'cat', 'subreddit': 'pics', 'syntax': 'lucene', 'limit': 10,
+                'time_filter_select': True, 'praw_sort': 'top', 'time_filter': 'all', 'start_date': '', 
                 'end_date': '', 'psaw_sort': '', 'favorite': True}
         )
 

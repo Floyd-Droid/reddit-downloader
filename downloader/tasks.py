@@ -32,7 +32,8 @@ reddit = praw.Reddit(
     client_id=env.str('CLIENT_ID'),
     client_secret=env.str('CLIENT_SECRET'),
     user_agent='jf_downloader',
-    redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize/'
+    # redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize/'
+    redirect_uri='http://localhost:8000/authorize/'
 )
 
 api = PushshiftAPI(reddit)
@@ -249,39 +250,22 @@ def get_psaw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
     start_date = int(query.start_date.timestamp())
     end_date = int(query.end_date.timestamp())
 
-    lim = query.limit
-    submissions_to_keep = []
-    last = None
-    count = 0
-
-    while len(submissions_to_keep) < query.limit:
-        submissions = list(api.search_submissions(
-            q=query.terms, 
-            subreddit=sub_str, 
-            limit=lim, 
-            after=start_date,
-            before=end_date, 
-            sort_type=query.psaw_sort, 
-            params={'after':last}
-            )
+    submissions = list(api.search_submissions(
+        q=query.terms, 
+        subreddit=sub_str, 
+        # double the limit to account for all deleted/stickied posts to be removed
+        limit=(query.limit*2), 
+        after=start_date,
+        before=end_date, 
+        sort_type=query.psaw_sort,
         )
-        if not submissions:
-            break
-        last = submissions[-1].fullname
-        len1 = len(submissions_to_keep)
-        # Find submissions to keep: ignore stickied, removed, or deleted posts.
-        submissions_to_keep += [sub for sub in submissions if sub.stickied is False and \
-            sub.selftext not in ['[removed]', '[deleted]']]
-        len2 = len(submissions_to_keep)
+    )
 
-        if len1 == len2:
-            if count == 5:
-                break
-            else:
-                count += 1
-        lim = query.limit - len(submissions_to_keep)        
-
-    results = get_submission_data(submissions_to_keep, sort=query.psaw_sort)
+    # Find submissions to keep: ignore stickied, removed, or deleted posts.
+    submissions_to_keep = [sub for sub in submissions if sub.stickied is False and \
+        sub.selftext not in ['[removed]', '[deleted]']]
+      
+    results = get_submission_data(submissions_to_keep[:query.limit], sort=query.psaw_sort)
     return (results, nonexistent_subs, forbidden_subs)
 
 def get_submission_by_id(id_: str):

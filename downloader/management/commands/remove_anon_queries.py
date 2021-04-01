@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from .models import SearchQuery
+from downloader.models import SearchQuery
 from datetime import datetime, timedelta
 
 class Command(BaseCommand):

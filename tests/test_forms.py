@@ -69,22 +69,6 @@ class TestSearchForm(TestCase):
             )
             sq = form.save(commit=False)
             self.assertEqual(sq.terms, "")
-
-    
-    def test_ignore_time_filter(self):
-        """
-        Ensure the time_filter field is set to an empty string if 
-        (1) There are no search terms, and 
-        (2) A certain praw sort is selected.
-        """
-        sort_options = ['hot', 'new', 'rising', 'random_rising']
-        for opt in sort_options:
-            form = SearchForm(data={'terms_select': True, 'terms': '', 'subreddit': 'askreddit', 'syntax': 'lucene', 
-                'praw_sort': opt, 'limit': 10, 'time_filter_select': True, 'time_filter': 'all', 'start_date': '', 
-                'end_date': '', 'psaw_sort': '', 'favorite': True}
-            )
-            sq = form.save(commit=False)
-            self.assertEqual(sq.time_filter, "")
         
     def test_required_search_terms(self): 
         """Ensure that search terms are required if a certain praw sort option is selected"""

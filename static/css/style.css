@@ -36,6 +36,10 @@ div#search-form-wrapper {
   width: 70vw;
 }
 
+p#terms-warning {
+  color: #FF4500;
+}
+
 div.login-wrapper {
   background-color: white;
   border: 1px ridge #14227b;
@@ -75,11 +79,6 @@ div.login-wrapper {
 
 .table {
   width: 100%; 
-}
-
-table.dataTable tbody tr td.select-checkbox {
-  top: 1.5em;
-  border: none;
 }
 
 input#id_url, input#id_terms, input#id_subreddit{

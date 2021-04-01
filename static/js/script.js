@@ -4,10 +4,7 @@ $(document).ready(function () {
       // Allow selection of rows
       orderable: false,
       className: 'select-checkbox',
-      targets: 0,
-      // 'render': function (data, type, full, meta) {
-      //   return '<input type="checkbox"/>'
-      // }
+      targets: 0
     }, {
       // Center cell data
       className: 'dt-center',
@@ -45,6 +42,8 @@ $(document).ready(function () {
     }
   });
 
+  // Ensure that only one option is selected for both the search options (url vs search terms)
+  // and the time options (time_filter vs date range)
   $(".option-select").click(function () {
     if ($(this).attr("id") == "id_url_select") {
       $("#id_terms_select").prop("checked", false)
@@ -55,6 +54,11 @@ $(document).ready(function () {
     } else if ($(this).attr("id") == "id_date_range_select") {
       $("#id_time_filter_select").prop("checked", false)
     }
+  });
+
+  // Add loading icon to search form submit button once clicked.
+  $('#search_btn').click(function (event) {
+    $('.loading-icon').show()
   });
 
   $("#remove-queries-form").submit(function (e) {
@@ -101,7 +105,7 @@ $(document).ready(function () {
   // Send ajax request to download submission data
   $("#download-form").submit(function (event) {
     event.preventDefault();
-    $('#loading-icon').show()
+    $('.loading-icon').show()
 
     // Gather the ids of the selected submissions
     let subIds = [];
@@ -112,7 +116,7 @@ $(document).ready(function () {
 
     // There must be at least one row selected.
     if (subIds.length == 0) {
-      $('#loading-icon').hide()
+      $('.loading-icon').hide()
       alert("Please select at least one row.");
       return
     }
@@ -129,10 +133,10 @@ $(document).ready(function () {
         // Begin downloading the generated zip file.
         $('div.message-wrapper').show();
         location.replace(response['url'])
-        $('#loading-icon').hide()
+        $('.loading-icon').hide()
       },
       error: function (response) {
-        $('#loading-icon').hide()
+        $('.loading-icon').hide()
 
         // Get the error messages and append them to the appropriate form div.
         let err_str = response.responseJSON['error']

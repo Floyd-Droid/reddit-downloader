@@ -72,7 +72,10 @@ class SearchView(View):
                     query.user = User.objects.get(username=username)
                 query.save()
             else:
-                context = {'form': form}
+                auth = request.session.get('authenticated', False)
+                context = {
+                    'form': form,
+                    'authenticated': auth}
                 return render(self.request, self.template_name, context)
 
         return redirect(reverse('downloader:search-results', kwargs={'pk': query.pk}))

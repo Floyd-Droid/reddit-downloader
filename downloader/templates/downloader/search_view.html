@@ -9,7 +9,7 @@
   <form action="{% url 'downloader:search-main' %}" method='POST'>
     {% csrf_token %}
     <div class="container">
-      <p>Please enter a URL below, or provide search criteria. Note that search terms are not always required.</p>
+      <p>Please enter a URL below to search for a single submission, or provide search criteria. Search terms may be required depending on the selected sort option.</p>
       <div class="row mt-5">
         <div class="col">
           {{form.url_select}}
@@ -41,7 +41,10 @@
           <p>{{form.limit.errors}}</p>
         </div>
       </div>
-      <div class="py-5" id="time_options">
+      <div class="pt-3 pb-5" id="time_options">
+        <div class="mb-5">
+          <p>Select either a standard Reddit time filter and sort, or provide a date a range with other sort.</p>
+        </div>
         <div class="row">
           <div class="col-auto">
             {{form.time_filter_select}}
@@ -81,7 +84,9 @@
       </div>
       <p class="my-5">{{form.favorite}} Favorite this search</p>
       <div class="container btn-container d-flex justify-content-center">
-        <button class="btn btn-success submit-btn" id="search_btn" type="submit">Search</button>
+        <button class="btn btn-success submit-btn" id="search_btn" type="submit">
+          <i class="fa fa-refresh fa-spin loading-icon" style="display:none"></i> Search
+        </button>
       </div>
     </div>
   </form>

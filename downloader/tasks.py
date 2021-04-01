@@ -32,8 +32,7 @@ reddit = praw.Reddit(
     client_id=env.str('CLIENT_ID'),
     client_secret=env.str('CLIENT_SECRET'),
     user_agent='jf_downloader',
-    # redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize/'
-    redirect_uri='http://localhost:8000/authorize/'
+    redirect_uri='https://jf-reddit-downloader.herokuapp.com/authorize/'
 )
 
 api = PushshiftAPI(reddit)
@@ -193,7 +192,7 @@ def get_praw_submissions(query: SearchQuery) -> Tuple[list, list, list]:
                 submissions = list(subreddit.controversial(limit=lim, time_filter=query.time_filter, params={'after':last})) 
             elif query.praw_sort == 'rising':
                 submissions = list(subreddit.rising(limit=lim, params={'after':last})) 
-            elif query.praw_sort == 'random rising':
+            elif query.praw_sort == 'random_rising':
                 submissions = list(subreddit.random_rising(limit=lim, params={'after':last}))
 
         if not submissions:

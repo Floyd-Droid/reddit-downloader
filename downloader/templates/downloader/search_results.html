@@ -28,13 +28,13 @@
         {% for sub in results %}
         <tr>
           <td></td>
-          <td class="align-middle">{{sub.title|truncatechars:200}}</td>
+          <td class="align-middle text-wrap">{{sub.title|truncatechars:200}}</td>
           <td class="align-middle">{{sub.score}}</td>
-          <td class="align-middle">{{sub.permalink|urlizetrunc:50}}</td>
-          <td class="align-middle">{{sub.url|urlizetrunc:50}}</td>
+          <td class="align-middle text-break">{{sub.permalink|urlizetrunc:50}}</td>
+          <td class="align-middle text-break">{{sub.url|urlizetrunc:50}}</td>
           <td class="align-middle">{{sub.num_comments}}</td>
           <td class="align-middle">{{sub.date}}</td>
-          <td class="align-middle">{{sub.selftext|truncatechars:200}}</td>
+          <td class="align-middle text-wrap">{{sub.selftext|truncatechars:200}}</td>
           <td>{{sub.id}}</td>
         </tr>
         {% endfor %}
@@ -84,7 +84,7 @@
       </div>
       <div class="btn-container d-flex justify-content-center">
         <button type="submit" class="btn btn-primary" id="download-btn">
-          <i class="fa fa-refresh fa-spin" id="loading-icon" style="display:none"></i> Download</button>
+          <i class="fa fa-refresh fa-spin loading-icon" style="display:none"></i> Download</button>
       </div>
     </form>
   </div>

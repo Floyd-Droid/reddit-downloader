@@ -29,7 +29,7 @@ class SearchForm(forms.ModelForm):
             if not instance.url:
                 self.fields['url_select'].initial = False
                 self.fields['terms_select'].initial = True
-            if not instance.time_filter:
+            if not (instance.time_filter or instance.praw_sort):
                 self.fields['time_filter_select'].initial = False
                 self.fields['date_range_select'].initial = True
         
@@ -69,7 +69,7 @@ class SearchForm(forms.ModelForm):
 
         # One search type must be selected
         if (url_selected and terms_selected) or (not url_selected and not terms_selected):
-            self.add_error('url', 'Please select either the url choice or the other criteria')
+            self.add_error('url', 'Please select either the url choice or the other search criteria')
 
         # Clear all search criteria if the user gives a URL.
         if url_selected:
@@ -101,9 +101,6 @@ class SearchForm(forms.ModelForm):
             # Search terms are not allowed for front page search or for certain praw sort options.
             if praw_sort in ['controversial', 'rising', 'random_rising'] or 'front' in subreddit_list:
                 cleaned_data['terms'] = ''
-            # A time filter won't apply to certain praw sorts.
-            if praw_sort in ['hot', 'new', 'rising', 'random_rising']:
-                cleaned_data['time_filter'] = ''
             # The following praw sort options require search terms
             if praw_sort in ['relevance', 'comments'] and not cleaned_data['terms']:
                 self.add_error('terms', 'Search terms are required for the selected sort option')

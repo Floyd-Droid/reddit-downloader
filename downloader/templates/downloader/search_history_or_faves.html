@@ -39,8 +39,8 @@
         {% for query in queries %}
         <tr>
           <td class="align-middle"></td>
-          <td class="align-middle">{{query.terms}}</td>
-          <td class="align-middle">{{query.subreddit|add_spaces}}</td>
+          <td class="align-middle text-wrap">{{query.terms}}</td>
+          <td class="align-middle text-wrap">{{query.subreddit|add_spaces}}</td>
           <td class="align-middle">
             {% if query.praw_sort %}
             {{query.get_praw_sort_display}}
@@ -57,7 +57,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="redo" value="{{query.pk}}">
                 <div>
-                  <button class="link-btn" type="submit">Search again</button>
+                  <button class="link-btn text-nowrap" type="submit">Search again</button>
                 </div>
                 <div>
                   <a href="{% url 'downloader:previous-search-main' pk=query.pk %}">Details</a>
